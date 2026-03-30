@@ -1,0 +1,51 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "src/assets/uploads"
+public_folder: "/assets/uploads"
+
+collections:
+  - name: "projects"
+    label: "Projects"
+    folder: "src/projects"
+    create: true
+    slug: "{{slug}}"
+    sortable_fields: ["order", "title"]
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Brand / Client", name: "brand", widget: "string" }
+      - { label: "Role", name: "role", widget: "string" }
+      - { label: "Kicker", name: "kicker", widget: "string", hint: "Category label above headline (e.g. Campaign, Sports, Commercial)" }
+      - { label: "Display Order", name: "order", widget: "number", value_type: "int", min: 1, hint: "Lower numbers appear first. Projects 1-2 get top placement." }
+      - { label: "Featured (Below Fold)", name: "featured", widget: "boolean", default: false, hint: "Show in the below-the-fold 3-up grid" }
+      - { label: "Description", name: "description", widget: "text" }
+      - { label: "Thumbnail", name: "thumbnail", widget: "image" }
+      - label: "Thumbnail Aspect Ratio"
+        name: "thumbnail_aspect"
+        widget: "select"
+        options: ["landscape", "portrait", "square"]
+        default: "landscape"
+        required: false
+      - { label: "Thumbnail Caption", name: "thumbnail_caption", widget: "string", required: false }
+      - label: "Gallery Images"
+        name: "images"
+        widget: "list"
+        fields:
+          - { label: "Image", name: "url", widget: "image" }
+
+  - name: "settings"
+    label: "Site Settings"
+    files:
+      - label: "General"
+        name: "site"
+        file: "src/_data/site.json"
+        fields:
+          - { label: "Site Title", name: "title", widget: "string" }
+          - { label: "Subtitle", name: "subtitle", widget: "string" }
+          - { label: "Email", name: "email", widget: "string" }
+          - { label: "Instagram Handle", name: "instagram", widget: "string" }
+          - { label: "Clients List", name: "clients", widget: "text", hint: "Separate with · (middle dot)" }
+          - { label: "About Photo", name: "about_photo", widget: "image" }
+          - { label: "About Title", name: "about_title", widget: "string" }
+          - { label: "About Bio (HTML)", name: "about_bio", widget: "text", hint: "Wrap paragraphs in <p> tags" }

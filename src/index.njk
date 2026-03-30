@@ -1,0 +1,182 @@
+---
+layout: base.njk
+---
+{# Assign projects by order for layout positions #}
+{% set allProjects = collections.projects %}
+{% set lead = allProjects[0] %}
+{% set secondary = allProjects[1] %}
+{% set leftMain = allProjects[2] %}
+{% set rightMain = allProjects[4] %}
+{% set rightSecondary = allProjects[5] %}
+{% set sidebarItems = [] %}
+{% for p in allProjects %}{% if loop.index0 > 5 %}{% set sidebarItems = (sidebarItems.push(p), sidebarItems) %}{% endif %}{% endfor %}
+{% set featured = collections.featuredProjects %}
+
+<div class="front-page" id="frontPage">
+  <header class="masthead">
+    <svg class="masthead-svg" onclick="window.scrollTo({top:0,behavior:'smooth'})" viewBox="0 0 452.04 41.89" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ethan Jack Smithe Byrne">{% include "masthead-inner.svg" %}</svg>
+    <div class="masthead-subtitle">{{ site.subtitle }}</div>
+  </header>
+
+  <div class="dateline-bar">
+    <span><a href="/about/">About</a> · <a href="mailto:{{ site.email }}">Contact</a> · <a href="https://instagram.com/{{ site.instagram }}" target="_blank">Instagram</a></span>
+    <span id="currentDate"></span>
+    <span class="dateline-stars">★★★★ $2.00</span>
+  </div>
+
+  <div class="ticker-bar">
+    <div class="ticker-item"><span class="ticker-label">DJIA</span> <span class="ticker-val">41230.73</span> <span class="ticker-chg ticker-down"><span class="ticker-tri">▼</span>280.01 -2.4%</span></div>
+    <div class="ticker-item"><span class="ticker-label">NASDAQ</span> <span class="ticker-val">17209.81</span> <span class="ticker-chg ticker-down"><span class="ticker-tri">▼</span>2.6%</span></div>
+    <div class="ticker-item"><span class="ticker-label">NIKKEI</span> <span class="ticker-val">37400.65</span> <span class="ticker-chg ticker-down"><span class="ticker-tri">▼</span>1.8%</span></div>
+    <div class="ticker-item"><span class="ticker-label">DJ STOXX 50</span> <span class="ticker-val">5042.13</span> <span class="ticker-chg ticker-down"><span class="ticker-tri">▼</span>0.2%</span></div>
+    <div class="ticker-item"><span class="ticker-label">10-YR TREAS</span> <span class="ticker-val">A 19/32, yield 3.96%</span></div>
+    <div class="ticker-item"><span class="ticker-label">OIL</span> <span class="ticker-val">$103.26</span> <span class="ticker-chg ticker-down"><span class="ticker-tri">▼</span>$3.08</span></div>
+    <div class="ticker-item"><span class="ticker-label">GOLD</span> <span class="ticker-val">$797.10</span> <span class="ticker-chg ticker-up"><span class="ticker-tri">▲</span>$59.40</span></div>
+    <div class="ticker-item"><span class="ticker-label">EURO</span> <span class="ticker-val">$1.4103</span></div>
+    <div class="ticker-item"><span class="ticker-label">YEN</span> <span class="ticker-val">107.11</span></div>
+  </div>
+
+  <div class="main-grid">
+    {# LEFT COLUMN #}
+    <div class="col-left">
+      {% if leftMain %}
+      <div class="story" onclick="openDetail({{ leftMain.data.order - 1 }})">
+        <div class="story-kicker">{{ leftMain.data.kicker }}</div>
+        <img class="story-image {% if leftMain.data.thumbnail_aspect == 'portrait' %}portrait{% elif leftMain.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ leftMain.data.thumbnail }}" alt="{{ leftMain.data.title }}">
+        <div class="story-headline md">{{ leftMain.data.title }}</div>
+        <div class="story-byline">{{ leftMain.data.brand }}</div>
+        <div class="story-excerpt">{{ leftMain.data.description | truncate(140) }}</div>
+      </div>
+      {% endif %}
+
+      <div class="whats-news">
+        <div class="whats-news-title">What's New</div>
+        {% for p in allProjects %}{% if loop.index0 > 5 %}
+        <div class="whats-news-item" onclick="openDetail({{ loop.index0 }})">
+          <div class="wn-headline">{{ p.data.title }}</div>
+          <div class="wn-client">{{ p.data.brand }}</div>
+        </div>
+        {% endif %}{% endfor %}
+      </div>
+    </div>
+
+    <div class="col-rule"></div>
+
+    {# CENTER COLUMN #}
+    <div class="col-center">
+      {% if lead %}
+      <div class="story" onclick="openDetail(0)">
+        <div class="story-kicker">{{ lead.data.kicker }}</div>
+        <div class="story-headline xl">{{ lead.data.title }}</div>
+        <div class="story-byline">{{ lead.data.brand }} · {{ lead.data.role }}</div>
+        <div class="hero-media-wrapper"><img src="{{ lead.data.thumbnail }}" alt="{{ lead.data.title }}"></div>
+        {% if lead.data.thumbnail_caption %}<div class="story-caption">{{ lead.data.thumbnail_caption }}</div>{% endif %}
+        <div class="story-excerpt">{{ lead.data.description }}</div>
+      </div>
+      {% endif %}
+
+      {% if secondary %}
+      <div class="story" onclick="openDetail(1)" style="border-top: 1px solid var(--rule-light); padding-top: 8px;">
+        <div class="story-headline lg">{{ secondary.data.title }}</div>
+        <div class="story-byline">{{ secondary.data.brand }} · {{ secondary.data.role }}</div>
+        <div class="story-excerpt">{{ secondary.data.description | truncate(180) }}</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="col-rule"></div>
+
+    {# RIGHT COLUMN #}
+    <div class="col-right">
+      {% if rightMain %}
+      <div class="story" onclick="openDetail(4)">
+        <div class="story-kicker">{{ rightMain.data.kicker }}</div>
+        <div class="story-headline lg">{{ rightMain.data.title }}</div>
+        <div class="story-byline">{{ rightMain.data.brand }}</div>
+        <img class="story-image" src="{{ rightMain.data.thumbnail }}" alt="{{ rightMain.data.title }}">
+        <div class="story-excerpt">{{ rightMain.data.description | truncate(140) }}</div>
+      </div>
+      {% endif %}
+
+      {% if rightSecondary %}
+      <div style="border-top: 1px solid var(--rule-light); padding-top: 8px;">
+        <div class="story" onclick="openDetail(5)">
+          <div class="story-headline md">{{ rightSecondary.data.title }}</div>
+          <div class="story-byline">{{ rightSecondary.data.brand }} · {{ rightSecondary.data.role }}</div>
+          <img class="story-image {% if rightSecondary.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ rightSecondary.data.thumbnail }}" alt="{{ rightSecondary.data.title }}">
+          {% if rightSecondary.data.thumbnail_caption %}<div class="story-caption">{{ rightSecondary.data.thumbnail_caption }}</div>{% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div style="border-top: 3px solid var(--text); padding-top: 6px; margin-top: 4px;">
+        <div class="whats-news-title">Selected Clients</div>
+        <div style="font-family: var(--font-body); font-size: 0.75rem; color: var(--text); line-height: 1.45;">{{ site.clients }}</div>
+      </div>
+    </div>
+  </div>
+
+  {# BELOW THE FOLD #}
+  {% if featured | length > 0 %}
+  <div class="below-fold">
+    <div class="below-fold-grid">
+      {% for p in featured %}
+        {% if loop.index0 > 0 and loop.index0 < 4 %}<div class="col-rule"></div>{% endif %}
+        {% if loop.index0 < 4 %}
+        <div class="bf-story" onclick="openDetail({% for ap in allProjects %}{% if ap.data.title == p.data.title %}{{ loop.index0 }}{% endif %}{% endfor %})">
+          <img class="story-image" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
+          <div class="story-headline md" style="margin-top:5px;">{{ p.data.title }}</div>
+          <div class="story-byline">{{ p.data.brand }}</div>
+          <div class="story-excerpt">{{ p.data.description | truncate(120) }}</div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <footer class="colophon">
+    <span>&copy; 2026 Ethan Byrne · Boston Polar Media</span>
+    <div class="colophon-links">
+      <a href="mailto:{{ site.email }}">{{ site.email }}</a>
+      <a href="https://instagram.com/{{ site.instagram }}" target="_blank">@{{ site.instagram }}</a>
+    </div>
+  </footer>
+</div>
+
+{# DETAIL OVERLAY #}
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-header-bar">
+    <div class="detail-header-inner">
+      <div class="detail-back" onclick="closeDetail()">&larr; Back to Front Page</div>
+      <svg class="detail-masthead-svg" onclick="closeDetail()" viewBox="0 0 452.04 41.89" xmlns="http://www.w3.org/2000/svg" aria-label="EJSB">{% include "masthead-inner.svg" %}</svg>
+      <div style="width: 120px;"></div>
+    </div>
+  </div>
+  <div class="detail-content" id="detailContent"></div>
+</div>
+
+{# Embed project data as JSON for detail overlay #}
+<script>
+var PROJECTS = [
+{% for p in allProjects %}
+  { name: {{ p.data.title | dump | safe }}, brand: {{ p.data.brand | dump | safe }}, role: {{ p.data.role | dump | safe }}, kicker: {{ p.data.kicker | dump | safe }}, description: {{ p.data.description | dump | safe }}, images: [{% for img in p.data.images %}"{{ img.url }}"{% if not loop.last %},{% endif %}{% endfor %}] }{% if not loop.last %},{% endif %}
+{% endfor %}
+];
+
+document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+function openDetail(idx) {
+  var p = PROJECTS[idx];
+  if (!p) return;
+  var overlay = document.getElementById('detailOverlay');
+  var content = document.getElementById('detailContent');
+  var galleryHTML = p.images.map(function(src, i) { return '<div><img src="' + src + '" alt="' + p.name + ' — image ' + (i+1) + '"></div>'; }).join('');
+  content.innerHTML = '<div class="detail-kicker">' + p.kicker + '</div><div class="detail-title">' + p.name + '</div><div class="detail-byline-block"><div class="detail-client">' + p.brand + ' · ' + p.role + '</div><div class="detail-date">2024–2025</div></div><div class="detail-description">' + p.description + '</div><div class="detail-gallery">' + galleryHTML + '</div>';
+  overlay.classList.add('active');
+  overlay.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+}
+function closeDetail() { document.getElementById('detailOverlay').classList.remove('active'); document.body.style.overflow = ''; }
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDetail(); });
+</script>

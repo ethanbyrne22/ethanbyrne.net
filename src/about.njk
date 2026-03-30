@@ -1,0 +1,37 @@
+---
+layout: base.njk
+permalink: /about/
+---
+
+<div class="about-overlay" style="position:relative;opacity:1;visibility:visible;">
+  <div class="detail-header-bar">
+    <div class="detail-header-inner">
+      <a class="detail-back" href="/">&larr; Back to Front Page</a>
+      <a href="/"><svg class="detail-masthead-svg" viewBox="0 0 452.04 41.89" xmlns="http://www.w3.org/2000/svg" aria-label="EJSB">{% include "masthead-inner.svg" %}</svg></a>
+      <div style="width: 120px;"></div>
+    </div>
+  </div>
+  <div class="about-content">
+    <div class="about-section-label">About the Photographer</div>
+    <div class="about-name">Ethan Byrne</div>
+    <div class="about-title">{{ site.about_title }}</div>
+    <div class="about-two-col">
+      <div>
+        <div class="about-bio">
+          {{ site.about_bio | safe }}
+        </div>
+      </div>
+      <div>
+        <img class="about-photo" src="{{ site.about_photo }}" alt="Ethan Byrne">
+        <div class="about-sidebar-section">
+          <div class="about-sidebar-heading">Contact</div>
+          <p><a href="mailto:{{ site.email }}">{{ site.email }}</a><br><a href="https://instagram.com/{{ site.instagram }}" target="_blank">@{{ site.instagram }}</a></p>
+        </div>
+        <div class="about-sidebar-section">
+          <div class="about-sidebar-heading">Selected Clients</div>
+          <div class="about-clients-list">{{ site.clients }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
