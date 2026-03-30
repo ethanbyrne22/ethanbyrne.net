@@ -17,7 +17,7 @@ description: >-
 
 
   My videos have been viewed tens of millions of times across Instagram, TikTok, YouTube, and broadcast on @nfl and team, player, and partner channels.
-thumbnail: /assets/uploads/nfl_nyg_bal_giants_staff_20241215_photo_michael_mooney_themooneyshot_final-1.heic
+thumbnail: /assets/uploads/profile-pic.png
 thumbnail_aspect: portrait
 thumbnail_caption: FOOTBALL
 video_url: https://www.youtube.com/watch?v=eeTS3Tdwiug
