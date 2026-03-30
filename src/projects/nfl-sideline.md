@@ -10,8 +10,8 @@ description: Multi-game sideline photography and video production for the
   with an emphasis on capturing the intensity and emotion of the game from the
   field level.
 thumbnail: https://picsum.photos/seed/nfl1/500/313
+video_url: https://www.youtube.com/watch?v=86eecuAMKnw
 images:
   - url: https://picsum.photos/seed/nfl1/1200/800
   - url: https://picsum.photos/seed/nfl2/1200/800
-  - url: https://www.youtube.com/watch?v=86eecuAMKnw
 ---
