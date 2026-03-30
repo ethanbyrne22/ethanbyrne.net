@@ -127,8 +127,8 @@ layout: base.njk
   <div class="below-fold">
     <div class="below-fold-grid">
       {% for p in featured %}
-        {% if loop.index0 > 0 and loop.index0 < 4 %}<div class="col-rule"></div>{% endif %}
-        {% if loop.index0 < 4 %}
+        {% if loop.index0 > 0 and loop.index0 < 3 %}<div class="col-rule"></div>{% endif %}
+        {% if loop.index0 < 3 %}
         <div class="bf-story" onclick="openDetail({% for ap in allProjects %}{% if ap.data.title == p.data.title %}{{ loop.index0 }}{% endif %}{% endfor %})">
           <img class="story-image" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
           <div class="story-headline md" style="margin-top:5px;">{{ p.data.title }}</div>
@@ -183,7 +183,7 @@ function openDetail(idx) {
   if (p.videoUrl) {
     var embedSrc = parseVideoUrl(p.videoUrl);
     if (embedSrc) {
-      videoHTML = '<div class="detail-video-wrapper"><iframe src="' + embedSrc + '?rel=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>';
+      videoHTML = '<div class="detail-video-wrapper"><iframe src="' + embedSrc + '?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>';
     }
   }
 
