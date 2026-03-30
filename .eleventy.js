@@ -3,6 +3,18 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("src/admin");
   eleventyConfig.addPassthroughCopy("src/assets");
 
+  // Filter: convert YouTube/Vimeo URL to embed URL
+  eleventyConfig.addFilter("videoEmbed", function(url) {
+    if (!url) return "";
+    // YouTube
+    var ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (ytMatch) return "https://www.youtube.com/embed/" + ytMatch[1];
+    // Vimeo
+    var vmMatch = url.match(/vimeo\.com\/(\d+)/);
+    if (vmMatch) return "https://player.vimeo.com/video/" + vmMatch[1];
+    return url;
+  });
+
   // Create a collection of projects sorted by display order
   eleventyConfig.addCollection("projects", function(collectionApi) {
     return collectionApi.getFilteredByGlob("src/projects/*.md").sort((a, b) => {

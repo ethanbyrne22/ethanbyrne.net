@@ -28,6 +28,7 @@ collections:
         default: "landscape"
         required: false
       - { label: "Thumbnail Caption", name: "thumbnail_caption", widget: "string", required: false }
+      - { label: "Video URL", name: "video_url", widget: "string", required: false, hint: "YouTube or Vimeo URL. Displays as embedded video on the project page." }
       - label: "Gallery Images"
         name: "images"
         widget: "list"
@@ -49,3 +50,4 @@ collections:
           - { label: "About Photo", name: "about_photo", widget: "image" }
           - { label: "About Title", name: "about_title", widget: "string" }
           - { label: "About Bio (HTML)", name: "about_bio", widget: "text", hint: "Wrap paragraphs in <p> tags" }
+          - { label: "Hero Video URL", name: "hero_video_url", widget: "string", required: false, hint: "YouTube or Vimeo URL for the lead story on the home page. Autoplays muted." }

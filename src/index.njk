@@ -69,7 +69,13 @@ layout: base.njk
         <div class="story-kicker">{{ lead.data.kicker }}</div>
         <div class="story-headline xl">{{ lead.data.title }}</div>
         <div class="story-byline">{{ lead.data.brand }} · {{ lead.data.role }}</div>
-        <div class="hero-media-wrapper"><img src="{{ lead.data.thumbnail }}" alt="{{ lead.data.title }}"></div>
+        <div class="hero-media-wrapper">
+          {% if site.hero_video_url %}
+            <iframe class="hero-video-iframe" src="{{ site.hero_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>
+          {% else %}
+            <img src="{{ lead.data.thumbnail }}" alt="{{ lead.data.title }}">
+          {% endif %}
+        </div>
         {% if lead.data.thumbnail_caption %}<div class="story-caption">{{ lead.data.thumbnail_caption }}</div>{% endif %}
         <div class="story-excerpt">{{ lead.data.description }}</div>
       </div>
@@ -160,7 +166,7 @@ layout: base.njk
 <script>
 var PROJECTS = [
 {% for p in allProjects %}
-  { name: {{ p.data.title | dump | safe }}, brand: {{ p.data.brand | dump | safe }}, role: {{ p.data.role | dump | safe }}, kicker: {{ p.data.kicker | dump | safe }}, description: {{ p.data.description | dump | safe }}, images: [{% for img in p.data.images %}"{{ img.url }}"{% if not loop.last %},{% endif %}{% endfor %}] }{% if not loop.last %},{% endif %}
+  { name: {{ p.data.title | dump | safe }}, brand: {{ p.data.brand | dump | safe }}, role: {{ p.data.role | dump | safe }}, kicker: {{ p.data.kicker | dump | safe }}, description: {{ p.data.description | dump | safe }}, videoUrl: {{ (p.data.video_url or "") | dump | safe }}, images: [{% for img in p.data.images %}"{{ img.url }}"{% if not loop.last %},{% endif %}{% endfor %}] }{% if not loop.last %},{% endif %}
 {% endfor %}
 ];
 
@@ -171,11 +177,33 @@ function openDetail(idx) {
   if (!p) return;
   var overlay = document.getElementById('detailOverlay');
   var content = document.getElementById('detailContent');
+
+  // Build video embed if video URL exists
+  var videoHTML = '';
+  if (p.videoUrl) {
+    var embedSrc = parseVideoUrl(p.videoUrl);
+    if (embedSrc) {
+      videoHTML = '<div class="detail-video-wrapper"><iframe src="' + embedSrc + '?rel=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>';
+    }
+  }
+
   var galleryHTML = p.images.map(function(src, i) { return '<div><img src="' + src + '" alt="' + p.name + ' — image ' + (i+1) + '"></div>'; }).join('');
-  content.innerHTML = '<div class="detail-kicker">' + p.kicker + '</div><div class="detail-title">' + p.name + '</div><div class="detail-byline-block"><div class="detail-client">' + p.brand + ' · ' + p.role + '</div><div class="detail-date">2024–2025</div></div><div class="detail-description">' + p.description + '</div><div class="detail-gallery">' + galleryHTML + '</div>';
+  content.innerHTML = '<div class="detail-kicker">' + p.kicker + '</div><div class="detail-title">' + p.name + '</div><div class="detail-byline-block"><div class="detail-client">' + p.brand + ' · ' + p.role + '</div><div class="detail-date">2024–2025</div></div><div class="detail-description">' + p.description + '</div>' + videoHTML + '<div class="detail-gallery">' + galleryHTML + '</div>';
   overlay.classList.add('active');
   overlay.scrollTop = 0;
   document.body.style.overflow = 'hidden';
+}
+
+// Parse YouTube or Vimeo URLs into embed URLs
+function parseVideoUrl(url) {
+  if (!url) return null;
+  // YouTube: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+  var ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return 'https://www.youtube.com/embed/' + ytMatch[1];
+  // Vimeo: vimeo.com/ID
+  var vmMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vmMatch) return 'https://player.vimeo.com/video/' + vmMatch[1];
+  return null;
 }
 function closeDetail() { document.getElementById('detailOverlay').classList.remove('active'); document.body.style.overflow = ''; }
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDetail(); });
