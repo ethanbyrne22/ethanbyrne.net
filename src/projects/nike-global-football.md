@@ -13,6 +13,7 @@ description: The Nike Global Football campaign combined cinematic direction with
 thumbnail: /assets/uploads/screenshot-2026-03-30-at-7.47.04 am.png
 thumbnail_caption: On-set production still, Nike Global Football 2024 —
   photographed on ARRI ALEXA 35
+video_url: https://www.youtube.com/watch?v=86eecuAMKnw
 images:
   - url: /assets/uploads/screenshot-2026-03-30-at-7.47.04 am.png
   - url: /assets/uploads/screenshot-2026-03-30-at-7.47.04 am.png
