@@ -4,7 +4,7 @@ brand: Nike
 role: DoP, Editor
 kicker: Internal + Social
 order: 1
-featured: true
+featured: false
 description: "My friends over at Resin Projects reached out for an internal Nike
   project. With the 2026 World Cup on the horizon, Nike was hosting a private
   media event, revealing the National Team Kits for the very first time. I flew
