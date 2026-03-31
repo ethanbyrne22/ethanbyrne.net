@@ -12,7 +12,11 @@ description: "My friends over at Resin Projects reached out for an internal Nike
   quick-turn edit to bring everything together. "
 thumbnail: /assets/uploads/nike-national-team-kit-reveal-event-02.png
 thumbnail_caption: Who said an internal sizzle recap can't be a good time
+thumbnail_video_url: https://youtu.be/5OSMndRa3w8
 video_url: https://youtu.be/5OSMndRa3w8
+videos:
+  - url: https://youtu.be/5OSMndRa3w8
+    caption: Nothing like a quick turn asset
 images:
   - url: /assets/uploads/nike-national-team-kit-reveal-event-04.png
   - url: /assets/uploads/nike-national-team-kit-reveal-event-03.png
