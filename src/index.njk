@@ -170,6 +170,7 @@ layout: base.njk
           <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
           {{ thumb(p) }}
           {% if p.data.thumbnail_caption %}<div class="story-caption">{{ p.data.thumbnail_caption }}</div>{% endif %}
+          <div class="story-excerpt">{{ p.data.description | truncate(140) }}</div>
         </div>
         {% else %}
         <div class="story" onclick="openDetail({{ idx }})">
@@ -215,7 +216,7 @@ layout: base.njk
 <script>
 var PROJECTS = [
 {% for p in allProjects %}
-  { name: {{ p.data.title | dump | safe }}, brand: {{ p.data.brand | dump | safe }}, role: {{ p.data.role | dump | safe }}, kicker: {{ p.data.kicker | dump | safe }}, description: {{ p.data.description | dump | safe }}, videoUrl: {{ (p.data.video_url or "") | dump | safe }}, videos: [{% if p.data.videos %}{% for v in p.data.videos %}{url:{{ v.url | dump | safe }},caption:{{ (v.caption or "") | dump | safe }}}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}], images: [{% for img in p.data.images %}"{{ img.url }}"{% if not loop.last %},{% endif %}{% endfor %}], imageAspects: [{% for img in p.data.images %}"{{ img.aspect | default('landscape') }}"{% if not loop.last %},{% endif %}{% endfor %}] }{% if not loop.last %},{% endif %}
+  { name: {{ p.data.title | dump | safe }}, brand: {{ p.data.brand | dump | safe }}, role: {{ p.data.role | dump | safe }}, kicker: {{ p.data.kicker | dump | safe }}, date: {{ (p.data.date or "") | dump | safe }}, description: {{ p.data.description | dump | safe }}, videoUrl: {{ (p.data.video_url or "") | dump | safe }}, videos: [{% if p.data.videos %}{% for v in p.data.videos %}{url:{{ v.url | dump | safe }},caption:{{ (v.caption or "") | dump | safe }}}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}], images: [{% for img in p.data.images %}"{{ img.url }}"{% if not loop.last %},{% endif %}{% endfor %}], imageAspects: [{% for img in p.data.images %}"{{ img.aspect | default('landscape') }}"{% if not loop.last %},{% endif %}{% endfor %}] }{% if not loop.last %},{% endif %}
 {% endfor %}
 ];
 
@@ -265,7 +266,13 @@ function openDetail(idx) {
     }
   }
 
-  content.innerHTML = '<div class="detail-kicker">' + p.kicker + '</div><div class="detail-title">' + p.name + '</div><div class="detail-byline-block"><div class="detail-client">' + p.brand + ' · ' + p.role + '</div><div class="detail-date">2024–2025</div></div><div class="detail-description">' + p.description + '</div>' + videoHTML + '<div class="detail-gallery">' + galleryHTML + '</div>';
+  var dateStr = '';
+  if (p.date) {
+    var d = new Date(p.date);
+    if (!isNaN(d)) dateStr = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+  }
+
+  content.innerHTML = '<div class="detail-kicker">' + p.kicker + '</div><div class="detail-title">' + p.name + '</div><div class="detail-byline-block"><div class="detail-client">' + p.brand + ' · ' + p.role + '</div>' + (dateStr ? '<div class="detail-date">' + dateStr + '</div>' : '') + '</div><div class="detail-description">' + p.description + '</div>' + videoHTML + '<div class="detail-gallery">' + galleryHTML + '</div>';
   overlay.classList.add('active');
   overlay.scrollTop = 0;
   document.body.style.overflow = 'hidden';
