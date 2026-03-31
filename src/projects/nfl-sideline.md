@@ -25,6 +25,8 @@ videos:
   - url: https://www.youtube.com/watch?v=eeTS3Tdwiug
 images:
   - url: /assets/uploads/img_1658.jpg
+    aspect: portrait
   - url: /assets/uploads/garrett-wilson.jpg
+    aspect: portrait
   - url: /assets/uploads/img_3640.jpg
 ---
