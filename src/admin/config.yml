@@ -28,6 +28,7 @@ collections:
         default: "landscape"
         required: false
       - { label: "Thumbnail Caption", name: "thumbnail_caption", widget: "string", required: false }
+      - { label: "Thumbnail Video URL", name: "thumbnail_video_url", widget: "string", required: false, hint: "YouTube or Vimeo URL to use as the thumbnail instead of an image. Autoplays muted and loops." }
       - { label: "Video URL (Legacy)", name: "video_url", widget: "string", required: false, hint: "Single video URL — use Videos list below instead for multiple videos." }
       - label: "Videos"
         name: "videos"
