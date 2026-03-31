@@ -74,7 +74,7 @@ layout: base.njk
         <div class="story-byline">{{ lead.data.brand }} · {{ lead.data.role }}</div>
         <div class="hero-media-wrapper">
           {% if site.hero_video_url %}
-            <iframe class="hero-video-iframe" src="{{ site.hero_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>
+            <iframe class="hero-video-iframe" src="{{ site.hero_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ site.hero_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>
           {% else %}
             <img src="{{ lead.data.thumbnail }}" alt="{{ lead.data.title }}">
           {% endif %}
@@ -157,89 +157,127 @@ layout: base.njk
     </div>
   </div>
 
-  {# ============ CONTINUED STORIES (projects 7+) in three columns ============ #}
+  {# ============ CONTINUED STORIES (projects 7+) — varied three-column layout ============ #}
   {% if allProjects | length > 6 %}
   {% set remaining = [] %}
   {% for p in allProjects %}{% if loop.index0 >= 6 %}{% set remaining = (remaining.push(p), remaining) %}{% endif %}{% endfor %}
 
-  {# Process remaining projects in groups of 3, alternating layout patterns #}
-  {% set rowIndex = 0 %}
   {% for i in range(0, remaining | length, 3) %}
+  {% set rowMod = loop.index0 % 3 %}
   <div class="story-row">
     <div class="story-row-grid">
-      {# Left column #}
+
+      {# LEFT COLUMN — varies by row pattern #}
       <div class="story-row-col">
         {% set p = remaining[i] %}
         {% if p %}
         <div class="story" onclick="openDetail({{ i + 6 }})">
-          {% if rowIndex is odd %}
+          {% if rowMod == 0 %}
             <div class="story-kicker">{{ p.data.kicker }}</div>
+            {% if p.data.thumbnail_video_url %}
+              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+            {% else %}
+              <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
+            {% endif %}
+            <div class="story-headline md">{{ p.data.title }}</div>
+            <div class="story-byline">{{ p.data.brand }}</div>
+            <div class="story-excerpt">{{ p.data.description | truncate(140) }}</div>
+          {% elif rowMod == 1 %}
             <div class="story-headline lg">{{ p.data.title }}</div>
-            <div class="story-byline">{{ p.data.brand }}</div>
-          {% endif %}
-          {% if p.data.thumbnail_video_url %}
-            <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+            <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
+            <div class="story-excerpt">{{ p.data.description | truncate(100) }}</div>
           {% else %}
-            <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
-          {% endif %}
-          {% if rowIndex is even %}
-            <div class="story-headline md" style="margin-top:4px;">{{ p.data.title }}</div>
+            {% if p.data.thumbnail_video_url %}
+              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+            {% else %}
+              <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
+            {% endif %}
+            <div class="story-headline md">{{ p.data.title }}</div>
             <div class="story-byline">{{ p.data.brand }}</div>
           {% endif %}
-          <div class="story-excerpt">{{ p.data.description | truncate(120) }}</div>
         </div>
         {% endif %}
       </div>
 
       <div class="col-rule"></div>
 
-      {# Center column #}
+      {# CENTER COLUMN — always prominent #}
       <div class="story-row-col story-row-col-center">
         {% set p = remaining[i + 1] %}
         {% if p %}
         <div class="story" onclick="openDetail({{ i + 7 }})">
-          <div class="story-kicker">{{ p.data.kicker }}</div>
-          <div class="story-headline lg">{{ p.data.title }}</div>
-          <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
-          {% if p.data.thumbnail_video_url %}
-            <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+          {% if rowMod == 0 %}
+            <div class="story-kicker">{{ p.data.kicker }}</div>
+            <div class="story-headline xl">{{ p.data.title }}</div>
+            <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
+            {% if p.data.thumbnail_video_url %}
+              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+            {% else %}
+              <img class="story-image" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
+            {% endif %}
+            <div class="story-excerpt">{{ p.data.description | truncate(180) }}</div>
+          {% elif rowMod == 1 %}
+            {% if p.data.thumbnail_video_url %}
+              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+            {% else %}
+              <img class="story-image" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
+            {% endif %}
+            {% if p.data.thumbnail_caption %}<div class="story-caption">{{ p.data.thumbnail_caption }}</div>{% endif %}
+            <div class="story-headline lg">{{ p.data.title }}</div>
+            <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
+            <div class="story-excerpt">{{ p.data.description | truncate(140) }}</div>
           {% else %}
-            <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
+            <div class="story-headline lg">{{ p.data.title }}</div>
+            <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
+            {% if p.data.thumbnail_video_url %}
+              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+            {% else %}
+              <img class="story-image" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
+            {% endif %}
+            <div class="story-excerpt">{{ p.data.description }}</div>
           {% endif %}
-          {% if p.data.thumbnail_caption %}<div class="story-caption">{{ p.data.thumbnail_caption }}</div>{% endif %}
-          <div class="story-excerpt">{{ p.data.description | truncate(140) }}</div>
         </div>
         {% endif %}
       </div>
 
       <div class="col-rule"></div>
 
-      {# Right column #}
+      {# RIGHT COLUMN — varies by row pattern #}
       <div class="story-row-col">
         {% set p = remaining[i + 2] %}
         {% if p %}
         <div class="story" onclick="openDetail({{ i + 8 }})">
-          {% if rowIndex is even %}
+          {% if rowMod == 0 %}
+            <div class="story-headline lg">{{ p.data.title }}</div>
+            <div class="story-byline">{{ p.data.brand }}</div>
+            {% if p.data.thumbnail_video_url %}
+              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+            {% else %}
+              <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
+            {% endif %}
+            {% if p.data.thumbnail_caption %}<div class="story-caption">{{ p.data.thumbnail_caption }}</div>{% endif %}
+            <div class="story-excerpt">{{ p.data.description | truncate(100) }}</div>
+          {% elif rowMod == 1 %}
             <div class="story-kicker">{{ p.data.kicker }}</div>
+            {% if p.data.thumbnail_video_url %}
+              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+            {% else %}
+              <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
+            {% endif %}
             <div class="story-headline md">{{ p.data.title }}</div>
             <div class="story-byline">{{ p.data.brand }}</div>
-          {% endif %}
-          {% if p.data.thumbnail_video_url %}
-            <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+            <div class="story-excerpt">{{ p.data.description | truncate(120) }}</div>
           {% else %}
-            <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
-          {% endif %}
-          {% if rowIndex is odd %}
-            <div class="story-headline md" style="margin-top:4px;">{{ p.data.title }}</div>
+            <div class="story-headline md">{{ p.data.title }}</div>
             <div class="story-byline">{{ p.data.brand }}</div>
+            <div class="story-excerpt">{{ p.data.description | truncate(80) }}</div>
           {% endif %}
-          <div class="story-excerpt">{{ p.data.description | truncate(100) }}</div>
         </div>
         {% endif %}
       </div>
+
     </div>
   </div>
-  {% set rowIndex = rowIndex + 1 %}
   {% endfor %}
   {% endif %}
 

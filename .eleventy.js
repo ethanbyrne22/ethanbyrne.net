@@ -15,6 +15,16 @@ module.exports = function(eleventyConfig) {
     return url;
   });
 
+  // Filter: extract YouTube/Vimeo video ID
+  eleventyConfig.addFilter("videoId", function(url) {
+    if (!url) return "";
+    var ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (ytMatch) return ytMatch[1];
+    var vmMatch = url.match(/vimeo\.com\/(\d+)/);
+    if (vmMatch) return vmMatch[1];
+    return "";
+  });
+
   // Filter: display date nicely
   eleventyConfig.addFilter("dateDisplay", function(dateObj) {
     if (!dateObj) return "";
