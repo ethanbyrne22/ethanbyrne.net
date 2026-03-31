@@ -20,7 +20,8 @@ description: A project like this is about as good as it gets. My friends at
 thumbnail: /assets/uploads/raiders_thumbnail.png
 thumbnail_aspect: square
 thumbnail_caption: As good as it gets.
-video_url: https://youtu.be/86eecuAMKnw
+thumbnail_video_url: https://www.youtube.com/watch?v=86eecuAMKnw
+video_url: https://www.youtube.com/watch?v=86eecuAMKnw
 images:
   - url: /assets/uploads/tbxobb_sizzle_01_14_47_20.jpg
   - url: /assets/uploads/tbxobb_sizzle_01_03_43_11.jpg
