@@ -1,9 +1,9 @@
 ---
 title: Nike National Team Kit Reveal Event
 brand: Nike
-role: DoP, Editor
+role: Director of Photography, Editor
 kicker: Internal + Social
-order: 1
+order: 2
 featured: false
 description: "My friends over at Resin Projects reached out for an internal Nike
   project. With the 2026 World Cup on the horizon, Nike was hosting a private
@@ -11,6 +11,7 @@ description: "My friends over at Resin Projects reached out for an internal Nike
   around with a C70 and a wide lens to make a dynamic, fast paced video with a
   quick-turn edit to bring everything together. "
 thumbnail: /assets/uploads/nike-national-team-kit-reveal-event-02.png
+thumbnail_aspect: landscape
 thumbnail_caption: Who said an internal sizzle recap can't be a good time
 thumbnail_video_url: https://youtu.be/5OSMndRa3w8
 video_url: https://youtu.be/5OSMndRa3w8
