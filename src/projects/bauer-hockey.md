@@ -18,11 +18,9 @@ description: >-
   The location, a laundromat in the Upper East Side, was as picturesque as it was small. We had to run some creative solutions to light the space the way we wanted, and wrapped a successful day ahead of schedule.
 thumbnail: /assets/uploads/nycfc_xylem_ethan_byrne_04.jpg
 thumbnail_aspect: square
-thumbnail_video_url: https://youtube.com/shorts/ZfHMavqI_Zg?feature=share
+thumbnail_video_url: ""
 video_url: ""
-videos:
-  - url: https://youtube.com/shorts/ZfHMavqI_Zg?feature=share
-    caption: ""
+videos: []
 images:
   - aspect: landscape
     url: /assets/uploads/nycfc_xylem_ethan_byrne_04.jpg
