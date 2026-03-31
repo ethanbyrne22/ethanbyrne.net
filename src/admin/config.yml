@@ -42,6 +42,24 @@ collections:
         widget: "list"
         fields:
           - { label: "Image", name: "url", widget: "image" }
+          - label: "Aspect Ratio"
+            name: "aspect"
+            widget: "select"
+            options: ["landscape", "portrait", "square"]
+            default: "landscape"
+            required: false
+            hint: "Portrait images will be displayed smaller or paired side-by-side on project pages."
+
+  - name: "letters"
+    label: "Letters from the Editors"
+    folder: "src/letters"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Excerpt", name: "excerpt", widget: "string", required: false, hint: "Short summary for previews" }
+      - { label: "Body", name: "body", widget: "markdown" }
 
   - name: "settings"
     label: "Site Settings"

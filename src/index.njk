@@ -1,16 +1,9 @@
 ---
 layout: base.njk
 ---
-{# Assign projects by order for layout positions #}
+{# All projects sorted by order #}
 {% set allProjects = collections.projects %}
-{% set lead = allProjects[0] %}
-{% set secondary = allProjects[1] %}
-{% set leftMain = allProjects[2] %}
-{% set rightMain = allProjects[4] %}
-{% set rightSecondary = allProjects[5] %}
-{% set sidebarItems = [] %}
-{% for p in allProjects %}{% if loop.index0 > 5 %}{% set sidebarItems = (sidebarItems.push(p), sidebarItems) %}{% endif %}{% endfor %}
-
+{% set letters = collections.letters %}
 
 <div class="front-page" id="frontPage">
   <header class="masthead">
@@ -35,11 +28,13 @@ layout: base.njk
     <div class="ticker-item"><span class="ticker-label">YEN</span> <span class="ticker-val" id="t-FXY">—</span> <span class="ticker-chg" id="tc-FXY"></span></div>
   </div>
 
+  {# ============ MAIN 3-COLUMN GRID (projects 1-6) ============ #}
   <div class="main-grid">
-    {# LEFT COLUMN #}
+    {# LEFT COLUMN: project 3 + Letters from the Editors #}
     <div class="col-left">
+      {% set leftMain = allProjects[2] %}
       {% if leftMain %}
-      <div class="story" onclick="openDetail({{ leftMain.data.order - 1 }})">
+      <div class="story" onclick="openDetail(2)">
         <div class="story-kicker">{{ leftMain.data.kicker }}</div>
         <img class="story-image {% if leftMain.data.thumbnail_aspect == 'portrait' %}portrait{% elif leftMain.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ leftMain.data.thumbnail }}" alt="{{ leftMain.data.title }}">
         <div class="story-headline md">{{ leftMain.data.title }}</div>
@@ -49,20 +44,25 @@ layout: base.njk
       {% endif %}
 
       <div class="whats-news">
-        <div class="whats-news-title">What's New</div>
-        {% for p in allProjects %}{% if loop.index0 > 5 %}
-        <div class="whats-news-item" onclick="openDetail({{ loop.index0 }})">
-          <div class="wn-headline">{{ p.data.title }}</div>
-          <div class="wn-client">{{ p.data.brand }}</div>
-        </div>
-        {% endif %}{% endfor %}
+        <div class="whats-news-title">Letters from the Editors</div>
+        {% if letters | length > 0 %}
+          {% for letter in letters %}
+          <a class="whats-news-item" href="/letters/{{ letter.fileSlug }}/">
+            <div class="wn-headline">{{ letter.data.title }}</div>
+            <div class="wn-client">{{ letter.data.date | dateDisplay }}</div>
+          </a>
+          {% endfor %}
+        {% else %}
+          <div style="font-family:var(--font-body);font-size:.78rem;color:var(--text);padding:5px 0;font-style:italic;">Coming soon...</div>
+        {% endif %}
       </div>
     </div>
 
     <div class="col-rule"></div>
 
-    {# CENTER COLUMN #}
+    {# CENTER COLUMN: project 1 (lead) + project 2 (secondary with thumbnail) #}
     <div class="col-center">
+      {% set lead = allProjects[0] %}
       {% if lead %}
       <div class="story" onclick="openDetail(0)">
         <div class="story-kicker">{{ lead.data.kicker }}</div>
@@ -80,10 +80,12 @@ layout: base.njk
       </div>
       {% endif %}
 
+      {% set secondary = allProjects[1] %}
       {% if secondary %}
       <div class="story" onclick="openDetail(1)" style="border-top: 1px solid var(--rule-light); padding-top: 8px;">
         <div class="story-headline lg">{{ secondary.data.title }}</div>
         <div class="story-byline">{{ secondary.data.brand }} · {{ secondary.data.role }}</div>
+        <img class="story-image {% if secondary.data.thumbnail_aspect == 'portrait' %}portrait{% elif secondary.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ secondary.data.thumbnail }}" alt="{{ secondary.data.title }}">
         <div class="story-excerpt">{{ secondary.data.description | truncate(180) }}</div>
       </div>
       {% endif %}
@@ -91,25 +93,39 @@ layout: base.njk
 
     <div class="col-rule"></div>
 
-    {# RIGHT COLUMN #}
+    {# RIGHT COLUMN: projects 4, 5, 6 + Selected Clients #}
     <div class="col-right">
+      {% set rightMain = allProjects[3] %}
       {% if rightMain %}
-      <div class="story" onclick="openDetail(4)">
+      <div class="story" onclick="openDetail(3)">
         <div class="story-kicker">{{ rightMain.data.kicker }}</div>
         <div class="story-headline lg">{{ rightMain.data.title }}</div>
         <div class="story-byline">{{ rightMain.data.brand }}</div>
-        <img class="story-image" src="{{ rightMain.data.thumbnail }}" alt="{{ rightMain.data.title }}">
+        <img class="story-image {% if rightMain.data.thumbnail_aspect == 'portrait' %}portrait{% elif rightMain.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ rightMain.data.thumbnail }}" alt="{{ rightMain.data.title }}">
         <div class="story-excerpt">{{ rightMain.data.description | truncate(140) }}</div>
       </div>
       {% endif %}
 
+      {% set rightSecondary = allProjects[4] %}
       {% if rightSecondary %}
       <div style="border-top: 1px solid var(--rule-light); padding-top: 8px;">
-        <div class="story" onclick="openDetail(5)">
+        <div class="story" onclick="openDetail(4)">
           <div class="story-headline md">{{ rightSecondary.data.title }}</div>
           <div class="story-byline">{{ rightSecondary.data.brand }} · {{ rightSecondary.data.role }}</div>
-          <img class="story-image {% if rightSecondary.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ rightSecondary.data.thumbnail }}" alt="{{ rightSecondary.data.title }}">
+          <img class="story-image {% if rightSecondary.data.thumbnail_aspect == 'portrait' %}portrait{% elif rightSecondary.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ rightSecondary.data.thumbnail }}" alt="{{ rightSecondary.data.title }}">
           {% if rightSecondary.data.thumbnail_caption %}<div class="story-caption">{{ rightSecondary.data.thumbnail_caption }}</div>{% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% set rightThird = allProjects[5] %}
+      {% if rightThird %}
+      <div style="border-top: 1px solid var(--rule-light); padding-top: 8px;">
+        <div class="story" onclick="openDetail(5)">
+          <div class="story-headline md">{{ rightThird.data.title }}</div>
+          <div class="story-byline">{{ rightThird.data.brand }}</div>
+          <img class="story-image {% if rightThird.data.thumbnail_aspect == 'portrait' %}portrait{% elif rightThird.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ rightThird.data.thumbnail }}" alt="{{ rightThird.data.title }}">
+          <div class="story-excerpt">{{ rightThird.data.description | truncate(100) }}</div>
         </div>
       </div>
       {% endif %}
@@ -120,6 +136,24 @@ layout: base.njk
       </div>
     </div>
   </div>
+
+  {# ============ ADDITIONAL STORIES (projects 7+) as rows of 3 ============ #}
+  {% if allProjects | length > 6 %}
+  <div class="additional-stories">
+    <div class="additional-stories-grid">
+      {% for p in allProjects %}
+        {% if loop.index0 >= 6 %}
+          <div class="additional-story" onclick="openDetail({{ loop.index0 }})">
+            <img class="story-image" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
+            <div class="story-headline md" style="margin-top:5px;">{{ p.data.title }}</div>
+            <div class="story-byline">{{ p.data.brand }}</div>
+            <div class="story-excerpt">{{ p.data.description | truncate(120) }}</div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 
   <footer class="colophon">
     <span>&copy; 2026 Ethan Byrne · Boston Polar Media</span>
@@ -146,7 +180,7 @@ layout: base.njk
 <script>
 var PROJECTS = [
 {% for p in allProjects %}
-  { name: {{ p.data.title | dump | safe }}, brand: {{ p.data.brand | dump | safe }}, role: {{ p.data.role | dump | safe }}, kicker: {{ p.data.kicker | dump | safe }}, description: {{ p.data.description | dump | safe }}, videoUrl: {{ (p.data.video_url or "") | dump | safe }}, videos: [{% if p.data.videos %}{% for v in p.data.videos %}{url:{{ v.url | dump | safe }},caption:{{ (v.caption or "") | dump | safe }}}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}], images: [{% for img in p.data.images %}"{{ img.url }}"{% if not loop.last %},{% endif %}{% endfor %}] }{% if not loop.last %},{% endif %}
+  { name: {{ p.data.title | dump | safe }}, brand: {{ p.data.brand | dump | safe }}, role: {{ p.data.role | dump | safe }}, kicker: {{ p.data.kicker | dump | safe }}, description: {{ p.data.description | dump | safe }}, videoUrl: {{ (p.data.video_url or "") | dump | safe }}, videos: [{% if p.data.videos %}{% for v in p.data.videos %}{url:{{ v.url | dump | safe }},caption:{{ (v.caption or "") | dump | safe }}}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}], images: [{% for img in p.data.images %}"{{ img.url }}"{% if not loop.last %},{% endif %}{% endfor %}], imageAspects: [{% for img in p.data.images %}"{{ img.aspect | default('landscape') }}"{% if not loop.last %},{% endif %}{% endfor %}] }{% if not loop.last %},{% endif %}
 {% endfor %}
 ];
 
@@ -158,41 +192,55 @@ function openDetail(idx) {
   var overlay = document.getElementById('detailOverlay');
   var content = document.getElementById('detailContent');
 
-  // Build video embeds — support both legacy videoUrl and new videos array
+  // Build video embeds
   var videoHTML = '';
   var allVideos = [];
-  // Collect from new videos array first
   if (p.videos && p.videos.length > 0) {
     p.videos.forEach(function(v) { allVideos.push({url: v.url, caption: v.caption}); });
   }
-  // Fall back to legacy single videoUrl if no videos array
   if (allVideos.length === 0 && p.videoUrl) {
     allVideos.push({url: p.videoUrl, caption: ''});
   }
   allVideos.forEach(function(v) {
     var embedSrc = parseVideoUrl(v.url);
     if (embedSrc) {
-      videoHTML += '<div class="detail-video-wrapper"><iframe src="' + embedSrc + '?autoplay=0&rel=0&modestbranding=1&playsinline=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>';
+      videoHTML += '<div class="detail-video-wrapper"><iframe src="' + embedSrc + '?autoplay=1&mute=1&loop=1&rel=0&modestbranding=1&playsinline=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>';
       if (v.caption) {
         videoHTML += '<div class="detail-video-caption">' + v.caption + '</div>';
       }
     }
   });
 
-  var galleryHTML = p.images.map(function(src, i) { return '<div><img src="' + src + '" alt="' + p.name + ' — image ' + (i+1) + '"></div>'; }).join('');
+  // Build gallery with smart portrait handling
+  var galleryHTML = '';
+  var i = 0;
+  while (i < p.images.length) {
+    var src = p.images[i];
+    var aspect = (p.imageAspects && p.imageAspects[i]) || 'landscape';
+    var nextAspect = (i + 1 < p.images.length && p.imageAspects) ? p.imageAspects[i + 1] : 'landscape';
+
+    if (aspect === 'portrait' && nextAspect === 'portrait' && i + 1 < p.images.length) {
+      galleryHTML += '<div class="detail-gallery-pair"><img src="' + src + '" alt="' + p.name + '"><img src="' + p.images[i+1] + '" alt="' + p.name + '"></div>';
+      i += 2;
+    } else if (aspect === 'portrait') {
+      galleryHTML += '<div class="detail-gallery-portrait"><img src="' + src + '" alt="' + p.name + '"></div>';
+      i++;
+    } else {
+      galleryHTML += '<div><img src="' + src + '" alt="' + p.name + '"></div>';
+      i++;
+    }
+  }
+
   content.innerHTML = '<div class="detail-kicker">' + p.kicker + '</div><div class="detail-title">' + p.name + '</div><div class="detail-byline-block"><div class="detail-client">' + p.brand + ' · ' + p.role + '</div><div class="detail-date">2024–2025</div></div><div class="detail-description">' + p.description + '</div>' + videoHTML + '<div class="detail-gallery">' + galleryHTML + '</div>';
   overlay.classList.add('active');
   overlay.scrollTop = 0;
   document.body.style.overflow = 'hidden';
 }
 
-// Parse YouTube or Vimeo URLs into embed URLs
 function parseVideoUrl(url) {
   if (!url) return null;
-  // YouTube: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
   var ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   if (ytMatch) return 'https://www.youtube.com/embed/' + ytMatch[1];
-  // Vimeo: vimeo.com/ID
   var vmMatch = url.match(/vimeo\.com\/(\d+)/);
   if (vmMatch) return 'https://player.vimeo.com/video/' + vmMatch[1];
   return null;
@@ -201,13 +249,11 @@ function closeDetail() { document.getElementById('detailOverlay').classList.remo
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDetail(); });
 
 // Dynamic stock ticker via Finnhub free API
-// Sign up at https://finnhub.io/ for a free API key, then replace below
 (function() {
   var FINNHUB_KEY = 'd75hic1r01qk56kcqbl0d75hic1r01qk56kcqblg';
   var symbols = ['DIA','QQQ','SPY','TLT','USO','GLD','FXE','FXY'];
   var prefixes = {DIA:'$',QQQ:'',SPY:'',TLT:'',USO:'$',GLD:'$',FXE:'$',FXY:''};
-  if (!FINNHUB_KEY) return; // Skip if no key set — ticker stays with dashes
-
+  if (!FINNHUB_KEY) return;
   symbols.forEach(function(sym) {
     fetch('https://finnhub.io/api/v1/quote?symbol=' + sym + '&token=' + FINNHUB_KEY)
       .then(function(r) { return r.json(); })
