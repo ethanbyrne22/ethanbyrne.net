@@ -22,7 +22,12 @@ permalink: /about/
         </div>
       </div>
       <div>
-        <img class="about-photo" src="{{ site.about_photo }}" alt="Ethan Byrne">
+        <div class="about-photo-wrapper">
+          <img class="about-photo about-photo-primary" src="{{ site.about_photo }}" alt="Ethan Byrne">
+          {% if site.about_photo_hover %}
+          <img class="about-photo about-photo-hover" src="{{ site.about_photo_hover }}" alt="Ethan Byrne">
+          {% endif %}
+        </div>
         <div class="about-sidebar-section">
           <div class="about-sidebar-heading">Contact</div>
           <p><a href="mailto:{{ site.email }}">{{ site.email }}</a><br><a href="https://instagram.com/{{ site.instagram }}" target="_blank">@{{ site.instagram }}</a></p>

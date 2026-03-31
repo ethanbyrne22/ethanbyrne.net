@@ -28,7 +28,15 @@ collections:
         default: "landscape"
         required: false
       - { label: "Thumbnail Caption", name: "thumbnail_caption", widget: "string", required: false }
-      - { label: "Video URL", name: "video_url", widget: "string", required: false, hint: "YouTube or Vimeo URL. Displays as embedded video on the project page." }
+      - { label: "Video URL (Legacy)", name: "video_url", widget: "string", required: false, hint: "Single video URL — use Videos list below instead for multiple videos." }
+      - label: "Videos"
+        name: "videos"
+        widget: "list"
+        required: false
+        hint: "Add one or more YouTube or Vimeo URLs. These display as embedded videos on the project page."
+        fields:
+          - { label: "Video URL", name: "url", widget: "string" }
+          - { label: "Caption", name: "caption", widget: "string", required: false }
       - label: "Gallery Images"
         name: "images"
         widget: "list"
@@ -48,6 +56,7 @@ collections:
           - { label: "Instagram Handle", name: "instagram", widget: "string" }
           - { label: "Clients List", name: "clients", widget: "text", hint: "Separate with · (middle dot)" }
           - { label: "About Photo", name: "about_photo", widget: "image" }
+          - { label: "About Photo (Hover)", name: "about_photo_hover", widget: "image", required: false, hint: "Second photo revealed on hover" }
           - { label: "About Title", name: "about_title", widget: "string" }
           - { label: "About Bio (HTML)", name: "about_bio", widget: "text", hint: "Wrap paragraphs in <p> tags" }
           - { label: "Hero Video URL", name: "hero_video_url", widget: "string", required: false, hint: "YouTube or Vimeo URL for the lead story on the home page. Autoplays muted." }

@@ -53,11 +53,12 @@ img,video{max-width:100%;display:block}
 .story-image.portrait{aspect-ratio:3/4}
 .story-image.square{aspect-ratio:1/1}
 .story-caption{font-family:var(--font-sans);font-size:.6rem;color:var(--text);margin-top:2px;margin-bottom:6px;line-height:1.25}
-.hero-media-wrapper{width:100%;aspect-ratio:16/10;overflow:hidden;margin-bottom:5px;position:relative;background:#111}
+.hero-media-wrapper{width:100%;aspect-ratio:16/9;overflow:hidden;margin-bottom:5px;position:relative;background:#111}
 .hero-media-wrapper img,.hero-media-wrapper video{width:100%;height:100%;object-fit:cover}
 .hero-media-wrapper iframe.hero-video-iframe{width:100%;height:100%;border:none;object-fit:cover}
 .detail-video-wrapper{position:relative;width:100%;padding-bottom:56.25%;margin-bottom:16px;background:#111}
 .detail-video-wrapper iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+.detail-video-caption{font-family:var(--font-sans);font-size:.6rem;color:var(--text);margin-top:-12px;margin-bottom:16px;line-height:1.25}
 .whats-news{border-top:3px solid var(--text);padding-top:6px;margin-top:2px}
 .whats-news-title{font-family:var(--font-headline);font-size:.95rem;font-weight:600;margin-bottom:6px;color:var(--text)}
 .whats-news-item{padding:5px 0;border-top:1px solid var(--rule-light);cursor:pointer;transition:opacity .2s}
@@ -103,6 +104,10 @@ img,video{max-width:100%;display:block}
 .about-bio p{margin-bottom:10px}
 .about-bio::first-letter{font-family:var(--font-headline);font-size:3rem;font-weight:600;float:left;line-height:.8;margin-right:6px;margin-top:4px;color:var(--text)}
 .about-photo{width:100%;aspect-ratio:3/4;object-fit:cover;margin-bottom:16px;background:#ddd}
+.about-photo-wrapper{position:relative;margin-bottom:16px;cursor:pointer}
+.about-photo-wrapper .about-photo{margin-bottom:0}
+.about-photo-wrapper .about-photo-hover{position:absolute;inset:0;opacity:0;transition:opacity .35s ease}
+.about-photo-wrapper:hover .about-photo-hover{opacity:1}
 .about-sidebar-heading{font-family:var(--font-headline);font-size:1rem;font-weight:600;color:var(--text);margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid var(--text)}
 .about-sidebar-section{margin-bottom:16px}
 .about-sidebar-section p,.about-sidebar-section a{font-family:var(--font-body);font-size:.82rem;line-height:1.4;color:var(--text)}

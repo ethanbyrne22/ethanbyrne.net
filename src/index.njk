@@ -10,7 +10,7 @@ layout: base.njk
 {% set rightSecondary = allProjects[5] %}
 {% set sidebarItems = [] %}
 {% for p in allProjects %}{% if loop.index0 > 5 %}{% set sidebarItems = (sidebarItems.push(p), sidebarItems) %}{% endif %}{% endfor %}
-{% set featured = collections.featuredProjects %}
+
 
 <div class="front-page" id="frontPage">
   <header class="masthead">
@@ -24,16 +24,15 @@ layout: base.njk
     <span class="dateline-stars">★★★★ $2.00</span>
   </div>
 
-  <div class="ticker-bar">
-    <div class="ticker-item"><span class="ticker-label">DJIA</span> <span class="ticker-val">41230.73</span> <span class="ticker-chg ticker-down"><span class="ticker-tri">▼</span>280.01 -2.4%</span></div>
-    <div class="ticker-item"><span class="ticker-label">NASDAQ</span> <span class="ticker-val">17209.81</span> <span class="ticker-chg ticker-down"><span class="ticker-tri">▼</span>2.6%</span></div>
-    <div class="ticker-item"><span class="ticker-label">NIKKEI</span> <span class="ticker-val">37400.65</span> <span class="ticker-chg ticker-down"><span class="ticker-tri">▼</span>1.8%</span></div>
-    <div class="ticker-item"><span class="ticker-label">DJ STOXX 50</span> <span class="ticker-val">5042.13</span> <span class="ticker-chg ticker-down"><span class="ticker-tri">▼</span>0.2%</span></div>
-    <div class="ticker-item"><span class="ticker-label">10-YR TREAS</span> <span class="ticker-val">A 19/32, yield 3.96%</span></div>
-    <div class="ticker-item"><span class="ticker-label">OIL</span> <span class="ticker-val">$103.26</span> <span class="ticker-chg ticker-down"><span class="ticker-tri">▼</span>$3.08</span></div>
-    <div class="ticker-item"><span class="ticker-label">GOLD</span> <span class="ticker-val">$797.10</span> <span class="ticker-chg ticker-up"><span class="ticker-tri">▲</span>$59.40</span></div>
-    <div class="ticker-item"><span class="ticker-label">EURO</span> <span class="ticker-val">$1.4103</span></div>
-    <div class="ticker-item"><span class="ticker-label">YEN</span> <span class="ticker-val">107.11</span></div>
+  <div class="ticker-bar" id="tickerBar">
+    <div class="ticker-item"><span class="ticker-label">DJIA</span> <span class="ticker-val" id="t-DIA">—</span> <span class="ticker-chg" id="tc-DIA"></span></div>
+    <div class="ticker-item"><span class="ticker-label">NASDAQ</span> <span class="ticker-val" id="t-QQQ">—</span> <span class="ticker-chg" id="tc-QQQ"></span></div>
+    <div class="ticker-item"><span class="ticker-label">S&amp;P 500</span> <span class="ticker-val" id="t-SPY">—</span> <span class="ticker-chg" id="tc-SPY"></span></div>
+    <div class="ticker-item"><span class="ticker-label">10-YR TREAS</span> <span class="ticker-val" id="t-TLT">—</span> <span class="ticker-chg" id="tc-TLT"></span></div>
+    <div class="ticker-item"><span class="ticker-label">OIL</span> <span class="ticker-val" id="t-USO">—</span> <span class="ticker-chg" id="tc-USO"></span></div>
+    <div class="ticker-item"><span class="ticker-label">GOLD</span> <span class="ticker-val" id="t-GLD">—</span> <span class="ticker-chg" id="tc-GLD"></span></div>
+    <div class="ticker-item"><span class="ticker-label">EURO</span> <span class="ticker-val" id="t-FXE">—</span> <span class="ticker-chg" id="tc-FXE"></span></div>
+    <div class="ticker-item"><span class="ticker-label">YEN</span> <span class="ticker-val" id="t-FXY">—</span> <span class="ticker-chg" id="tc-FXY"></span></div>
   </div>
 
   <div class="main-grid">
@@ -122,25 +121,6 @@ layout: base.njk
     </div>
   </div>
 
-  {# BELOW THE FOLD #}
-  {% if featured | length > 0 %}
-  <div class="below-fold">
-    <div class="below-fold-grid">
-      {% for p in featured %}
-        {% if loop.index0 > 0 and loop.index0 < 3 %}<div class="col-rule"></div>{% endif %}
-        {% if loop.index0 < 3 %}
-        <div class="bf-story" onclick="openDetail({% for ap in allProjects %}{% if ap.data.title == p.data.title %}{{ loop.index0 }}{% endif %}{% endfor %})">
-          <img class="story-image" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
-          <div class="story-headline md" style="margin-top:5px;">{{ p.data.title }}</div>
-          <div class="story-byline">{{ p.data.brand }}</div>
-          <div class="story-excerpt">{{ p.data.description | truncate(120) }}</div>
-        </div>
-        {% endif %}
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
   <footer class="colophon">
     <span>&copy; 2026 Ethan Byrne · Boston Polar Media</span>
     <div class="colophon-links">
@@ -166,7 +146,7 @@ layout: base.njk
 <script>
 var PROJECTS = [
 {% for p in allProjects %}
-  { name: {{ p.data.title | dump | safe }}, brand: {{ p.data.brand | dump | safe }}, role: {{ p.data.role | dump | safe }}, kicker: {{ p.data.kicker | dump | safe }}, description: {{ p.data.description | dump | safe }}, videoUrl: {{ (p.data.video_url or "") | dump | safe }}, images: [{% for img in p.data.images %}"{{ img.url }}"{% if not loop.last %},{% endif %}{% endfor %}] }{% if not loop.last %},{% endif %}
+  { name: {{ p.data.title | dump | safe }}, brand: {{ p.data.brand | dump | safe }}, role: {{ p.data.role | dump | safe }}, kicker: {{ p.data.kicker | dump | safe }}, description: {{ p.data.description | dump | safe }}, videoUrl: {{ (p.data.video_url or "") | dump | safe }}, videos: [{% if p.data.videos %}{% for v in p.data.videos %}{url:{{ v.url | dump | safe }},caption:{{ (v.caption or "") | dump | safe }}}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}], images: [{% for img in p.data.images %}"{{ img.url }}"{% if not loop.last %},{% endif %}{% endfor %}] }{% if not loop.last %},{% endif %}
 {% endfor %}
 ];
 
@@ -178,14 +158,26 @@ function openDetail(idx) {
   var overlay = document.getElementById('detailOverlay');
   var content = document.getElementById('detailContent');
 
-  // Build video embed if video URL exists
+  // Build video embeds — support both legacy videoUrl and new videos array
   var videoHTML = '';
-  if (p.videoUrl) {
-    var embedSrc = parseVideoUrl(p.videoUrl);
-    if (embedSrc) {
-      videoHTML = '<div class="detail-video-wrapper"><iframe src="' + embedSrc + '?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>';
-    }
+  var allVideos = [];
+  // Collect from new videos array first
+  if (p.videos && p.videos.length > 0) {
+    p.videos.forEach(function(v) { allVideos.push({url: v.url, caption: v.caption}); });
   }
+  // Fall back to legacy single videoUrl if no videos array
+  if (allVideos.length === 0 && p.videoUrl) {
+    allVideos.push({url: p.videoUrl, caption: ''});
+  }
+  allVideos.forEach(function(v) {
+    var embedSrc = parseVideoUrl(v.url);
+    if (embedSrc) {
+      videoHTML += '<div class="detail-video-wrapper"><iframe src="' + embedSrc + '?autoplay=0&rel=0&modestbranding=1&playsinline=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>';
+      if (v.caption) {
+        videoHTML += '<div class="detail-video-caption">' + v.caption + '</div>';
+      }
+    }
+  });
 
   var galleryHTML = p.images.map(function(src, i) { return '<div><img src="' + src + '" alt="' + p.name + ' — image ' + (i+1) + '"></div>'; }).join('');
   content.innerHTML = '<div class="detail-kicker">' + p.kicker + '</div><div class="detail-title">' + p.name + '</div><div class="detail-byline-block"><div class="detail-client">' + p.brand + ' · ' + p.role + '</div><div class="detail-date">2024–2025</div></div><div class="detail-description">' + p.description + '</div>' + videoHTML + '<div class="detail-gallery">' + galleryHTML + '</div>';
@@ -207,4 +199,35 @@ function parseVideoUrl(url) {
 }
 function closeDetail() { document.getElementById('detailOverlay').classList.remove('active'); document.body.style.overflow = ''; }
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDetail(); });
+
+// Dynamic stock ticker via Finnhub free API
+// Sign up at https://finnhub.io/ for a free API key, then replace below
+(function() {
+  var FINNHUB_KEY = 'd75hic1r01qk56kcqbl0d75hic1r01qk56kcqblg';
+  var symbols = ['DIA','QQQ','SPY','TLT','USO','GLD','FXE','FXY'];
+  var prefixes = {DIA:'$',QQQ:'',SPY:'',TLT:'',USO:'$',GLD:'$',FXE:'$',FXY:''};
+  if (!FINNHUB_KEY) return; // Skip if no key set — ticker stays with dashes
+
+  symbols.forEach(function(sym) {
+    fetch('https://finnhub.io/api/v1/quote?symbol=' + sym + '&token=' + FINNHUB_KEY)
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d || !d.c) return;
+        var valEl = document.getElementById('t-' + sym);
+        var chgEl = document.getElementById('tc-' + sym);
+        if (!valEl) return;
+        var price = d.c;
+        var change = d.d;
+        var pct = d.dp;
+        valEl.textContent = (prefixes[sym] || '') + price.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+        if (change !== null && change !== undefined) {
+          var isUp = change >= 0;
+          var tri = isUp ? '▲' : '▼';
+          chgEl.className = 'ticker-chg ' + (isUp ? 'ticker-up' : 'ticker-down');
+          chgEl.innerHTML = '<span class="ticker-tri">' + tri + '</span>' + Math.abs(pct).toFixed(1) + '%';
+        }
+      })
+      .catch(function() {});
+  });
+})();
 </script>
