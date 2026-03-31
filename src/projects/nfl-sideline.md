@@ -1,9 +1,9 @@
 ---
-title: Content for the NFL
+title: Sidelines and Beyond for the NFL
 brand: NFL
 role: Live Content Correspondent
 kicker: Social
-order: 2
+order: 1
 featured: false
 description: >-
   I'm entering my fourth season with the NFL as a Live Content Correspondent,
@@ -23,6 +23,8 @@ thumbnail_caption: FOOTBALL
 video_url: ""
 videos:
   - url: https://www.youtube.com/watch?v=eeTS3Tdwiug
+  - url: https://youtu.be/QjtQoyqGAVE
+    caption: Super Bowl Hype
 images:
   - url: /assets/uploads/img_1658.jpg
     aspect: portrait
