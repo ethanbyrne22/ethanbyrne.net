@@ -17,10 +17,12 @@ description: >-
 
 
   My videos have been viewed tens of millions of times across Instagram, TikTok, YouTube, and broadcast on @nfl and team, player, and partner channels.
-thumbnail: /assets/uploads/profile-pic.png
+thumbnail: /assets/uploads/garrett-wilson.jpg
 thumbnail_aspect: portrait
 thumbnail_caption: FOOTBALL
-video_url: https://www.youtube.com/watch?v=eeTS3Tdwiug
+video_url: ""
+videos:
+  - url: https://www.youtube.com/watch?v=eeTS3Tdwiug
 images:
   - url: /assets/uploads/img_1658.jpg
   - url: /assets/uploads/garrett-wilson.jpg
