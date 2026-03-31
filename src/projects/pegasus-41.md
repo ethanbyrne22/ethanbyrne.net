@@ -3,7 +3,7 @@ title: 2025 LIV Golf Team Championship
 brand: LIV Golf
 role: Director of Photography
 kicker: Broadcast
-order: 4
+order: 2
 featured: false
 description: This one was sweaty. Standing outside in Miami in August is already
   hot enough, for this one I had a heavy camera on my shoulder. This project
