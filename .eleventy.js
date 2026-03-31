@@ -15,6 +15,13 @@ module.exports = function(eleventyConfig) {
     return url;
   });
 
+  // Filter: display date nicely
+  eleventyConfig.addFilter("dateDisplay", function(dateObj) {
+    if (!dateObj) return "";
+    var d = new Date(dateObj);
+    return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  });
+
   // Create a collection of projects sorted by display order
   eleventyConfig.addCollection("projects", function(collectionApi) {
     return collectionApi.getFilteredByGlob("src/projects/*.md").sort((a, b) => {
@@ -22,11 +29,11 @@ module.exports = function(eleventyConfig) {
     });
   });
 
-  // Featured projects (first 3 by order) for below-the-fold
-  eleventyConfig.addCollection("featuredProjects", function(collectionApi) {
-    return collectionApi.getFilteredByGlob("src/projects/*.md")
-      .filter(p => p.data.featured)
-      .sort((a, b) => (a.data.order || 999) - (b.data.order || 999));
+  // Letters from the Editors — sorted newest first
+  eleventyConfig.addCollection("letters", function(collectionApi) {
+    return collectionApi.getFilteredByGlob("src/letters/*.md").sort((a, b) => {
+      return new Date(b.data.date) - new Date(a.data.date);
+    });
   });
 
   return {
