@@ -3,7 +3,7 @@ title: 2025 LIV Golf Team Championship
 brand: LIV Golf
 role: Director of Photography
 kicker: Broadcast
-order: 3
+order: 4
 featured: false
 description: This one was sweaty. Standing outside in Miami in August is already
   hot enough, for this one I had a heavy camera on my shoulder. This project
@@ -14,7 +14,7 @@ description: This one was sweaty. Standing outside in Miami in August is already
 thumbnail: /assets/uploads/tb_liv_autoplay_01_00_35_07.jpg
 thumbnail_aspect: portrait
 thumbnail_caption: Tom Brady, noted football player.
-thumbnail_video_url: ""
+thumbnail_video_url: https://youtu.be/AWgkwtssJqo
 video_url: ""
 videos:
   - url: https://youtu.be/AWgkwtssJqo
