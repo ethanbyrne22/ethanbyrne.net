@@ -3,7 +3,7 @@ title: Nike National Team Kit Reveal Event
 brand: Nike
 role: Director of Photography, Editor
 kicker: Internal + Social
-order: 2
+order: 4
 featured: false
 description: "My friends over at Resin Projects reached out for an internal Nike
   project. With the 2026 World Cup on the horizon, Nike was hosting a private
