@@ -5,6 +5,27 @@ layout: base.njk
 {% set allProjects = collections.projects %}
 {% set letters = collections.letters %}
 
+{# Distribute projects into three independent columns #}
+{% set leftProjects = [] %}
+{% set centerProjects = [] %}
+{% set rightProjects = [] %}
+{% for p in allProjects %}
+  {% set col = loop.index0 % 3 %}
+  {% if col == 0 %}{% set leftProjects = (leftProjects.push(p), leftProjects) %}
+  {% elif col == 1 %}{% set centerProjects = (centerProjects.push(p), centerProjects) %}
+  {% else %}{% set rightProjects = (rightProjects.push(p), rightProjects) %}
+  {% endif %}
+{% endfor %}
+
+{# Macro for rendering a thumbnail (image or video) #}
+{% macro thumb(p) %}
+  {% if p.data.thumbnail_video_url %}
+    <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+  {% else %}
+    <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
+  {% endif %}
+{% endmacro %}
+
 <div class="front-page" id="frontPage">
   <header class="masthead">
     <svg class="masthead-svg" onclick="window.scrollTo({top:0,behavior:'smooth'})" viewBox="0 0 452.04 41.89" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ethan Jack Smithe Byrne">{% include "masthead-inner.svg" %}</svg>
@@ -28,258 +49,146 @@ layout: base.njk
     <div class="ticker-item"><span class="ticker-label">YEN</span> <span class="ticker-val" id="t-FXY">—</span> <span class="ticker-chg" id="tc-FXY"></span></div>
   </div>
 
-  {# ============ MAIN 3-COLUMN GRID (projects 1-6) ============ #}
-  <div class="main-grid">
-    {# LEFT COLUMN: project 3 + Letters from the Editors #}
-    <div class="col-left">
-      {% set leftMain = allProjects[2] %}
-      {% if leftMain %}
-      <div class="story" onclick="openDetail(2)">
-        <div class="story-kicker">{{ leftMain.data.kicker }}</div>
-        {% if leftMain.data.thumbnail_video_url %}
-          <div class="story-video-thumb"><iframe src="{{ leftMain.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
-        {% else %}
-          <img class="story-image {% if leftMain.data.thumbnail_aspect == 'portrait' %}portrait{% elif leftMain.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ leftMain.data.thumbnail }}" alt="{{ leftMain.data.title }}">
-        {% endif %}
-        <div class="story-headline md">{{ leftMain.data.title }}</div>
-        <div class="story-byline">{{ leftMain.data.brand }}</div>
-        <div class="story-excerpt">{{ leftMain.data.description | truncate(140) }}</div>
-      </div>
-      {% endif %}
+  {# ============ THREE INDEPENDENT COLUMNS ============ #}
+  <div class="newspaper-grid">
 
-      <div class="whats-news">
-        <div class="whats-news-title">Letters from the Editors</div>
-        {% if letters | length > 0 %}
-          {% for letter in letters %}
-          <a class="whats-news-item" href="/letters/{{ letter.fileSlug }}/">
-            <div class="wn-headline">{{ letter.data.title }}</div>
-            <div class="wn-client">{{ letter.data.date | dateDisplay }}</div>
-          </a>
-          {% endfor %}
+    {# ——— LEFT COLUMN ——— #}
+    <div class="col col-left">
+      {% for p in leftProjects %}
+        {% set idx = loop.index0 * 3 %}
+        {% set variant = loop.index0 % 3 %}
+
+        {% if variant == 0 %}
+        <div class="story" onclick="openDetail({{ idx }})">
+          <div class="story-kicker">{{ p.data.kicker }}</div>
+          {{ thumb(p) }}
+          <div class="story-headline md">{{ p.data.title }}</div>
+          <div class="story-byline">{{ p.data.brand }}</div>
+          <div class="story-excerpt">{{ p.data.description | truncate(140) }}</div>
+        </div>
+        {% elif variant == 1 %}
+        <div class="story" onclick="openDetail({{ idx }})">
+          <div class="story-headline lg">{{ p.data.title }}</div>
+          <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
+          {{ thumb(p) }}
+          <div class="story-excerpt">{{ p.data.description | truncate(100) }}</div>
+        </div>
         {% else %}
-          <div style="font-family:var(--font-body);font-size:.78rem;color:var(--text);padding:5px 0;font-style:italic;">Coming soon...</div>
+        <div class="story" onclick="openDetail({{ idx }})">
+          {{ thumb(p) }}
+          <div class="story-headline md">{{ p.data.title }}</div>
+          <div class="story-byline">{{ p.data.brand }}</div>
+        </div>
         {% endif %}
-      </div>
+
+        {% if loop.index0 == 0 %}
+        <div class="whats-news">
+          <div class="whats-news-title">Letters from the Editors</div>
+          {% if letters | length > 0 %}
+            {% for letter in letters %}{% if loop.index0 < 4 %}
+            <a class="whats-news-item" href="/letters/{{ letter.fileSlug }}/">
+              <div class="wn-headline">{{ letter.data.title }}</div>
+              <div class="wn-client">{{ letter.data.date | dateDisplay }}</div>
+            </a>
+            {% endif %}{% endfor %}
+          {% else %}
+            <div style="font-family:var(--font-body);font-size:.78rem;color:var(--text);padding:5px 0;font-style:italic;">Coming soon...</div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+      {% endfor %}
     </div>
 
     <div class="col-rule"></div>
 
-    {# CENTER COLUMN: project 1 (lead) + project 2 (secondary with thumbnail) #}
-    <div class="col-center">
-      {% set lead = allProjects[0] %}
-      {% if lead %}
-      <div class="story" onclick="openDetail(0)">
-        <div class="story-kicker">{{ lead.data.kicker }}</div>
-        <div class="story-headline xl">{{ lead.data.title }}</div>
-        <div class="story-byline">{{ lead.data.brand }} · {{ lead.data.role }}</div>
-        <div class="hero-media-wrapper">
-          {% if site.hero_video_url %}
-            <iframe class="hero-video-iframe" src="{{ site.hero_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ site.hero_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>
-          {% else %}
-            <img src="{{ lead.data.thumbnail }}" alt="{{ lead.data.title }}">
-          {% endif %}
-        </div>
-        {% if lead.data.thumbnail_caption %}<div class="story-caption">{{ lead.data.thumbnail_caption }}</div>{% endif %}
-        <div class="story-excerpt">{{ lead.data.description }}</div>
-      </div>
-      {% endif %}
+    {# ——— CENTER COLUMN ——— #}
+    <div class="col col-center">
+      {% for p in centerProjects %}
+        {% set idx = loop.index0 * 3 + 1 %}
+        {% set variant = loop.index0 % 3 %}
 
-      {% set secondary = allProjects[1] %}
-      {% if secondary %}
-      <div class="story" onclick="openDetail(1)" style="border-top: 1px solid var(--rule-light); padding-top: 8px;">
-        <div class="story-headline lg">{{ secondary.data.title }}</div>
-        <div class="story-byline">{{ secondary.data.brand }} · {{ secondary.data.role }}</div>
-        {% if secondary.data.thumbnail_video_url %}
-          <div class="story-video-thumb"><iframe src="{{ secondary.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+        {% if variant == 0 %}
+        <div class="story" onclick="openDetail({{ idx }})">
+          <div class="story-kicker">{{ p.data.kicker }}</div>
+          <div class="story-headline xl">{{ p.data.title }}</div>
+          <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
+          <div class="hero-media-wrapper">
+            {% if loop.index0 == 0 and site.hero_video_url %}
+              <iframe class="hero-video-iframe" src="{{ site.hero_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ site.hero_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>
+            {% elif p.data.thumbnail_video_url %}
+              <iframe class="hero-video-iframe" src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe>
+            {% else %}
+              <img src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
+            {% endif %}
+          </div>
+          {% if p.data.thumbnail_caption %}<div class="story-caption">{{ p.data.thumbnail_caption }}</div>{% endif %}
+          <div class="story-excerpt">{{ p.data.description }}</div>
+        </div>
+
+        {% elif variant == 1 %}
+        <div class="story" onclick="openDetail({{ idx }})" style="border-top:1px solid var(--rule-light);padding-top:8px;">
+          <div class="story-headline lg">{{ p.data.title }}</div>
+          <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
+          {{ thumb(p) }}
+          {% if p.data.thumbnail_caption %}<div class="story-caption">{{ p.data.thumbnail_caption }}</div>{% endif %}
+          <div class="story-excerpt">{{ p.data.description | truncate(180) }}</div>
+        </div>
+
         {% else %}
-          <img class="story-image {% if secondary.data.thumbnail_aspect == 'portrait' %}portrait{% elif secondary.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ secondary.data.thumbnail }}" alt="{{ secondary.data.title }}">
+        <div class="story" onclick="openDetail({{ idx }})" style="border-top:1px solid var(--rule-light);padding-top:8px;">
+          <div class="story-kicker">{{ p.data.kicker }}</div>
+          {{ thumb(p) }}
+          <div class="story-headline lg">{{ p.data.title }}</div>
+          <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
+          <div class="story-excerpt">{{ p.data.description | truncate(140) }}</div>
+        </div>
         {% endif %}
-        <div class="story-excerpt">{{ secondary.data.description | truncate(180) }}</div>
-      </div>
-      {% endif %}
+
+      {% endfor %}
     </div>
 
     <div class="col-rule"></div>
 
-    {# RIGHT COLUMN: projects 4, 5, 6 + Selected Clients #}
-    <div class="col-right">
-      {% set rightMain = allProjects[3] %}
-      {% if rightMain %}
-      <div class="story" onclick="openDetail(3)">
-        <div class="story-kicker">{{ rightMain.data.kicker }}</div>
-        <div class="story-headline lg">{{ rightMain.data.title }}</div>
-        <div class="story-byline">{{ rightMain.data.brand }}</div>
-        {% if rightMain.data.thumbnail_video_url %}
-          <div class="story-video-thumb"><iframe src="{{ rightMain.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+    {# ——— RIGHT COLUMN ——— #}
+    <div class="col col-right">
+      {% for p in rightProjects %}
+        {% set idx = loop.index0 * 3 + 2 %}
+        {% set variant = loop.index0 % 3 %}
+
+        {% if variant == 0 %}
+        <div class="story" onclick="openDetail({{ idx }})">
+          <div class="story-kicker">{{ p.data.kicker }}</div>
+          <div class="story-headline lg">{{ p.data.title }}</div>
+          <div class="story-byline">{{ p.data.brand }}</div>
+          {{ thumb(p) }}
+          <div class="story-excerpt">{{ p.data.description | truncate(140) }}</div>
+        </div>
+        {% elif variant == 1 %}
+        <div class="story" onclick="openDetail({{ idx }})" style="border-top:1px solid var(--rule-light);padding-top:8px;">
+          <div class="story-headline md">{{ p.data.title }}</div>
+          <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
+          {{ thumb(p) }}
+          {% if p.data.thumbnail_caption %}<div class="story-caption">{{ p.data.thumbnail_caption }}</div>{% endif %}
+        </div>
         {% else %}
-          <img class="story-image {% if rightMain.data.thumbnail_aspect == 'portrait' %}portrait{% elif rightMain.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ rightMain.data.thumbnail }}" alt="{{ rightMain.data.title }}">
+        <div class="story" onclick="openDetail({{ idx }})">
+          {{ thumb(p) }}
+          <div class="story-headline md">{{ p.data.title }}</div>
+          <div class="story-byline">{{ p.data.brand }}</div>
+          <div class="story-excerpt">{{ p.data.description | truncate(100) }}</div>
+        </div>
         {% endif %}
-        <div class="story-excerpt">{{ rightMain.data.description | truncate(140) }}</div>
-      </div>
-      {% endif %}
 
-      {% set rightSecondary = allProjects[4] %}
-      {% if rightSecondary %}
-      <div style="border-top: 1px solid var(--rule-light); padding-top: 8px;">
-        <div class="story" onclick="openDetail(4)">
-          <div class="story-headline md">{{ rightSecondary.data.title }}</div>
-          <div class="story-byline">{{ rightSecondary.data.brand }} · {{ rightSecondary.data.role }}</div>
-          {% if rightSecondary.data.thumbnail_video_url %}
-            <div class="story-video-thumb"><iframe src="{{ rightSecondary.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
-          {% else %}
-            <img class="story-image {% if rightSecondary.data.thumbnail_aspect == 'portrait' %}portrait{% elif rightSecondary.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ rightSecondary.data.thumbnail }}" alt="{{ rightSecondary.data.title }}">
-          {% endif %}
-          {% if rightSecondary.data.thumbnail_caption %}<div class="story-caption">{{ rightSecondary.data.thumbnail_caption }}</div>{% endif %}
-        </div>
-      </div>
-      {% endif %}
-
-      {% set rightThird = allProjects[5] %}
-      {% if rightThird %}
-      <div style="border-top: 1px solid var(--rule-light); padding-top: 8px;">
-        <div class="story" onclick="openDetail(5)">
-          <div class="story-headline md">{{ rightThird.data.title }}</div>
-          <div class="story-byline">{{ rightThird.data.brand }}</div>
-          {% if rightThird.data.thumbnail_video_url %}
-            <div class="story-video-thumb"><iframe src="{{ rightThird.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
-          {% else %}
-            <img class="story-image {% if rightThird.data.thumbnail_aspect == 'portrait' %}portrait{% elif rightThird.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ rightThird.data.thumbnail }}" alt="{{ rightThird.data.title }}">
-          {% endif %}
-          <div class="story-excerpt">{{ rightThird.data.description | truncate(100) }}</div>
-        </div>
-      </div>
-      {% endif %}
+      {% endfor %}
 
       <div style="border-top: 3px solid var(--text); padding-top: 6px; margin-top: 4px;">
         <div class="whats-news-title">Selected Clients</div>
         <div style="font-family: var(--font-body); font-size: 0.75rem; color: var(--text); line-height: 1.45;">{{ site.clients }}</div>
       </div>
     </div>
+
   </div>
-
-  {# ============ CONTINUED STORIES (projects 7+) — varied three-column layout ============ #}
-  {% if allProjects | length > 6 %}
-  {% set remaining = [] %}
-  {% for p in allProjects %}{% if loop.index0 >= 6 %}{% set remaining = (remaining.push(p), remaining) %}{% endif %}{% endfor %}
-
-  {% for i in range(0, remaining | length, 3) %}
-  {% set rowMod = loop.index0 % 3 %}
-  <div class="story-row">
-    <div class="story-row-grid">
-
-      {# LEFT COLUMN — varies by row pattern #}
-      <div class="story-row-col">
-        {% set p = remaining[i] %}
-        {% if p %}
-        <div class="story" onclick="openDetail({{ i + 6 }})">
-          {% if rowMod == 0 %}
-            <div class="story-kicker">{{ p.data.kicker }}</div>
-            {% if p.data.thumbnail_video_url %}
-              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
-            {% else %}
-              <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
-            {% endif %}
-            <div class="story-headline md">{{ p.data.title }}</div>
-            <div class="story-byline">{{ p.data.brand }}</div>
-            <div class="story-excerpt">{{ p.data.description | truncate(140) }}</div>
-          {% elif rowMod == 1 %}
-            <div class="story-headline lg">{{ p.data.title }}</div>
-            <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
-            <div class="story-excerpt">{{ p.data.description | truncate(100) }}</div>
-          {% else %}
-            {% if p.data.thumbnail_video_url %}
-              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
-            {% else %}
-              <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
-            {% endif %}
-            <div class="story-headline md">{{ p.data.title }}</div>
-            <div class="story-byline">{{ p.data.brand }}</div>
-          {% endif %}
-        </div>
-        {% endif %}
-      </div>
-
-      <div class="col-rule"></div>
-
-      {# CENTER COLUMN — always prominent #}
-      <div class="story-row-col story-row-col-center">
-        {% set p = remaining[i + 1] %}
-        {% if p %}
-        <div class="story" onclick="openDetail({{ i + 7 }})">
-          {% if rowMod == 0 %}
-            <div class="story-kicker">{{ p.data.kicker }}</div>
-            <div class="story-headline xl">{{ p.data.title }}</div>
-            <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
-            {% if p.data.thumbnail_video_url %}
-              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
-            {% else %}
-              <img class="story-image" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
-            {% endif %}
-            <div class="story-excerpt">{{ p.data.description | truncate(180) }}</div>
-          {% elif rowMod == 1 %}
-            {% if p.data.thumbnail_video_url %}
-              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
-            {% else %}
-              <img class="story-image" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
-            {% endif %}
-            {% if p.data.thumbnail_caption %}<div class="story-caption">{{ p.data.thumbnail_caption }}</div>{% endif %}
-            <div class="story-headline lg">{{ p.data.title }}</div>
-            <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
-            <div class="story-excerpt">{{ p.data.description | truncate(140) }}</div>
-          {% else %}
-            <div class="story-headline lg">{{ p.data.title }}</div>
-            <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
-            {% if p.data.thumbnail_video_url %}
-              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
-            {% else %}
-              <img class="story-image" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
-            {% endif %}
-            <div class="story-excerpt">{{ p.data.description }}</div>
-          {% endif %}
-        </div>
-        {% endif %}
-      </div>
-
-      <div class="col-rule"></div>
-
-      {# RIGHT COLUMN — varies by row pattern #}
-      <div class="story-row-col">
-        {% set p = remaining[i + 2] %}
-        {% if p %}
-        <div class="story" onclick="openDetail({{ i + 8 }})">
-          {% if rowMod == 0 %}
-            <div class="story-headline lg">{{ p.data.title }}</div>
-            <div class="story-byline">{{ p.data.brand }}</div>
-            {% if p.data.thumbnail_video_url %}
-              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
-            {% else %}
-              <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
-            {% endif %}
-            {% if p.data.thumbnail_caption %}<div class="story-caption">{{ p.data.thumbnail_caption }}</div>{% endif %}
-            <div class="story-excerpt">{{ p.data.description | truncate(100) }}</div>
-          {% elif rowMod == 1 %}
-            <div class="story-kicker">{{ p.data.kicker }}</div>
-            {% if p.data.thumbnail_video_url %}
-              <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
-            {% else %}
-              <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
-            {% endif %}
-            <div class="story-headline md">{{ p.data.title }}</div>
-            <div class="story-byline">{{ p.data.brand }}</div>
-            <div class="story-excerpt">{{ p.data.description | truncate(120) }}</div>
-          {% else %}
-            <div class="story-headline md">{{ p.data.title }}</div>
-            <div class="story-byline">{{ p.data.brand }}</div>
-            <div class="story-excerpt">{{ p.data.description | truncate(80) }}</div>
-          {% endif %}
-        </div>
-        {% endif %}
-      </div>
-
-    </div>
-  </div>
-  {% endfor %}
-  {% endif %}
 
   <footer class="colophon">
     <span>&copy; 2026 Ethan Byrne · Boston Polar Media</span>
@@ -318,7 +227,6 @@ function openDetail(idx) {
   var overlay = document.getElementById('detailOverlay');
   var content = document.getElementById('detailContent');
 
-  // Build video embeds
   var videoHTML = '';
   var allVideos = [];
   if (p.videos && p.videos.length > 0) {
@@ -330,21 +238,21 @@ function openDetail(idx) {
   allVideos.forEach(function(v) {
     var embedSrc = parseVideoUrl(v.url);
     if (embedSrc) {
-      videoHTML += '<div class="detail-video-wrapper"><iframe src="' + embedSrc + '?autoplay=1&mute=1&loop=1&rel=0&modestbranding=1&playsinline=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>';
+      var vid = v.url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      var playlist = vid ? '&playlist=' + vid[1] : '';
+      videoHTML += '<div class="detail-video-wrapper"><iframe src="' + embedSrc + '?autoplay=1&mute=1&loop=1' + playlist + '&rel=0&modestbranding=1&playsinline=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>';
       if (v.caption) {
         videoHTML += '<div class="detail-video-caption">' + v.caption + '</div>';
       }
     }
   });
 
-  // Build gallery with smart portrait handling
   var galleryHTML = '';
   var i = 0;
   while (i < p.images.length) {
     var src = p.images[i];
     var aspect = (p.imageAspects && p.imageAspects[i]) || 'landscape';
     var nextAspect = (i + 1 < p.images.length && p.imageAspects) ? p.imageAspects[i + 1] : 'landscape';
-
     if (aspect === 'portrait' && nextAspect === 'portrait' && i + 1 < p.images.length) {
       galleryHTML += '<div class="detail-gallery-pair"><img src="' + src + '" alt="' + p.name + '"><img src="' + p.images[i+1] + '" alt="' + p.name + '"></div>';
       i += 2;
@@ -374,7 +282,6 @@ function parseVideoUrl(url) {
 function closeDetail() { document.getElementById('detailOverlay').classList.remove('active'); document.body.style.overflow = ''; }
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDetail(); });
 
-// Dynamic stock ticker via Finnhub free API
 (function() {
   var FINNHUB_KEY = 'd75hic1r01qk56kcqbl0d75hic1r01qk56kcqblg';
   var symbols = ['DIA','QQQ','SPY','TLT','USO','GLD','FXE','FXY'];
@@ -388,15 +295,11 @@ document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close
         var valEl = document.getElementById('t-' + sym);
         var chgEl = document.getElementById('tc-' + sym);
         if (!valEl) return;
-        var price = d.c;
-        var change = d.d;
-        var pct = d.dp;
-        valEl.textContent = (prefixes[sym] || '') + price.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
-        if (change !== null && change !== undefined) {
-          var isUp = change >= 0;
-          var tri = isUp ? '▲' : '▼';
+        valEl.textContent = (prefixes[sym] || '') + d.c.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+        if (d.d !== null && d.d !== undefined) {
+          var isUp = d.d >= 0;
           chgEl.className = 'ticker-chg ' + (isUp ? 'ticker-up' : 'ticker-down');
-          chgEl.innerHTML = '<span class="ticker-tri">' + tri + '</span>' + Math.abs(pct).toFixed(1) + '%';
+          chgEl.innerHTML = '<span class="ticker-tri">' + (isUp ? '▲' : '▼') + '</span>' + Math.abs(d.dp).toFixed(1) + '%';
         }
       })
       .catch(function() {});
