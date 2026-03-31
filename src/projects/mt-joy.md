@@ -1,13 +1,23 @@
 ---
-title: "Mt. Joy Performance"
-brand: "Mt. Joy"
-role: "Photographer"
-kicker: "Music"
+title: Josh Hart & Ariel Helwani for the Premier League
+brand: Premier League, Yahoo
+role: Director of Photography
+kicker: Branded Documentary
 order: 10
-featured: true
-description: "Concert photography and behind-the-scenes documentation for Mt. Joy's live performances."
-thumbnail: "https://picsum.photos/seed/mtjoy/500/333"
+featured: false
+description: "Tom Martin brought me on to DP select episodes of an upcoming
+  series hosted by Ariel Helwani for the Premier League. "
+thumbnail: /assets/uploads/premier-league-josh-hart-05.jpg
+thumbnail_aspect: landscape
 images:
-  - url: "https://picsum.photos/seed/mtjoy1/1200/800"
-  - url: "https://picsum.photos/seed/mtjoy2/1200/800"
+  - aspect: landscape
+    url: /assets/uploads/premier-league-josh-hart-01.jpg
+  - aspect: landscape
+    url: /assets/uploads/premier-league-josh-hart-02.jpg
+  - aspect: landscape
+    url: /assets/uploads/premier-league-josh-hart-04.jpg
+  - aspect: landscape
+    url: /assets/uploads/premier-league-josh-hart-05.jpg
+  - aspect: landscape
+    url: /assets/uploads/premier-league-josh-hart-07.jpg
 ---
