@@ -3,6 +3,17 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("src/admin");
   eleventyConfig.addPassthroughCopy("src/assets");
 
+  // Favicons (must live at site root)
+  eleventyConfig.addPassthroughCopy({ "src/favicon.ico": "favicon.ico" });
+  eleventyConfig.addPassthroughCopy({ "src/favicon.svg": "favicon.svg" });
+  eleventyConfig.addPassthroughCopy({ "src/favicon-96x96.png": "favicon-96x96.png" });
+  eleventyConfig.addPassthroughCopy({ "src/apple-touch-icon.png": "apple-touch-icon.png" });
+  eleventyConfig.addPassthroughCopy({ "src/web-app-manifest-192x192.png": "web-app-manifest-192x192.png" });
+  eleventyConfig.addPassthroughCopy({ "src/web-app-manifest-512x512.png": "web-app-manifest-512x512.png" });
+  eleventyConfig.addPassthroughCopy({ "src/site.webmanifest": "site.webmanifest" });
+  eleventyConfig.addPassthroughCopy({ "src/robots.txt": "robots.txt" });
+  eleventyConfig.addPassthroughCopy({ "src/llms.txt": "llms.txt" });
+
   // Filter: convert YouTube/Vimeo URL to embed URL
   eleventyConfig.addFilter("videoEmbed", function(url) {
     if (!url) return "";
