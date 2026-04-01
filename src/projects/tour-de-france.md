@@ -9,7 +9,7 @@ description: I went to France with my friends Joe and Kevin to watch the Mont
   Ventoux and La Plagne climbs of the Tour de France. It rocked. Stills from my
   Leica are in this gallery, with a short film on the way. Slowly.
 thumbnail: /assets/uploads/tourdefrance_2025_leica-191.jpg
-thumbnail_aspect: portrait
+thumbnail_aspect: square
 images:
   - aspect: landscape
     url: /assets/uploads/tourdefrance_2025_leica-067.jpg
