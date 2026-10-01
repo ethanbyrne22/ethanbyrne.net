@@ -14,6 +14,7 @@ thumbnail: /assets/uploads/nike-national-team-kit-reveal-event-02.png
 thumbnail_aspect: landscape
 thumbnail_caption: Who said an internal sizzle recap can't be a good time
 thumbnail_video_url: https://youtu.be/5OSMndRa3w8
+loop_video: /assets/uploads/nike_wc_sizzle_v2-1-loop.mp4
 video_url: https://youtu.be/5OSMndRa3w8
 videos:
   - url: https://youtu.be/5OSMndRa3w8
