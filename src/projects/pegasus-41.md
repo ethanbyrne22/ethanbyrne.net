@@ -19,6 +19,7 @@ thumbnail: /assets/uploads/tb_liv_autoplay_01_00_35_07.jpg
 thumbnail_aspect: portrait
 thumbnail_caption: Tom Brady, noted football player.
 thumbnail_video_url: https://youtu.be/AWgkwtssJqo
+loop_video: /assets/uploads/tb-250-v4-3x2-loop.mp4
 video_url: ""
 videos:
   - url: https://youtu.be/AWgkwtssJqo
