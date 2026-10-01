@@ -17,9 +17,12 @@ layout: base.njk
   {% endif %}
 {% endfor %}
 
-{# Silent looping video. YouTube shows a still until it's actually playing; Vimeo falls back to a plain embed. #}
-{% macro videoLoop(url, poster, alt) %}
-  {% if url | isYouTube %}
+{# Silent looping video. A self-hosted MP4 loop is preferred (no player interface at all).
+   Without one, YouTube shows a still until it's playing; Vimeo falls back to a plain embed. #}
+{% macro videoLoop(url, poster, alt, loopFile) %}
+  {% if loopFile %}
+    <div class="yt-loop" data-src="{{ loopFile }}"><video muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1"></video><img class="yt-poster" src="{{ poster }}" alt="{{ alt }}" decoding="async"></div>
+  {% elif url | isYouTube %}
     <div class="yt-loop" data-yt="{{ url | videoId }}"><div class="yt-mount"></div><img class="yt-poster" src="{{ poster }}" alt="{{ alt }}" decoding="async"></div>
   {% else %}
     <iframe class="legacy-embed" src="{{ url | videoEmbed }}?autoplay=1&muted=1&loop=1&background=1" frameborder="0" allow="autoplay" loading="lazy"></iframe>
@@ -28,8 +31,8 @@ layout: base.njk
 
 {# Macro for rendering a thumbnail (image or video) #}
 {% macro thumb(p) %}
-  {% if p.data.thumbnail_video_url %}
-    <div class="story-video-thumb">{{ videoLoop(p.data.thumbnail_video_url, p.data | videoPoster(p.data.thumbnail_video_url), p.data.title) }}</div>
+  {% if p.data.loop_video or p.data.thumbnail_video_url %}
+    <div class="story-video-thumb">{{ videoLoop(p.data.thumbnail_video_url, p.data | videoPoster(p.data.thumbnail_video_url), p.data.title, p.data.loop_video) }}</div>
   {% else %}
     <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
   {% endif %}
@@ -125,8 +128,8 @@ layout: base.njk
           <div class="hero-media-wrapper">
             {% if loop.index0 == 0 and site.hero_video_url %}
               {{ videoLoop(site.hero_video_url, p.data | videoPoster(site.hero_video_url), p.data.title) }}
-            {% elif p.data.thumbnail_video_url %}
-              {{ videoLoop(p.data.thumbnail_video_url, p.data | videoPoster(p.data.thumbnail_video_url), p.data.title) }}
+            {% elif p.data.loop_video or p.data.thumbnail_video_url %}
+              {{ videoLoop(p.data.thumbnail_video_url, p.data | videoPoster(p.data.thumbnail_video_url), p.data.title, p.data.loop_video) }}
             {% else %}
               <img src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
             {% endif %}
@@ -226,7 +229,7 @@ layout: base.njk
 var PROJECTS = [
 {% for p in allProjects %}
   {% if p.data.videos and (p.data.videos | length) %}{% set firstVid = p.data.videos[0].url %}{% else %}{% set firstVid = p.data.video_url or "" %}{% endif %}
-  { poster: {{ (p.data | videoPoster(firstVid)) | dump | safe }}, name: {{ p.data.title | dump | safe }}, brand: {{ p.data.brand | dump | safe }}, role: {{ p.data.role | dump | safe }}, kicker: {{ p.data.kicker | dump | safe }}, date: {{ (p.data.date or "") | dump | safe }}, description: {{ p.data.description | dump | safe }}, videoUrl: {{ (p.data.video_url or "") | dump | safe }}, videos: [{% if p.data.videos %}{% for v in p.data.videos %}{url:{{ v.url | dump | safe }},caption:{{ (v.caption or "") | dump | safe }}}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}], images: [{% for img in p.data.images %}"{{ img.url }}"{% if not loop.last %},{% endif %}{% endfor %}], imageAspects: [{% for img in p.data.images %}"{{ img.aspect | default('landscape') }}"{% if not loop.last %},{% endif %}{% endfor %}] }{% if not loop.last %},{% endif %}
+  { poster: {{ (p.data | videoPoster(firstVid)) | dump | safe }}, loopVideo: {{ (p.data.loop_video or "") | dump | safe }}, name: {{ p.data.title | dump | safe }}, brand: {{ p.data.brand | dump | safe }}, role: {{ p.data.role | dump | safe }}, kicker: {{ p.data.kicker | dump | safe }}, date: {{ (p.data.date or "") | dump | safe }}, description: {{ p.data.description | dump | safe }}, videoUrl: {{ (p.data.video_url or "") | dump | safe }}, videos: [{% if p.data.videos %}{% for v in p.data.videos %}{url:{{ v.url | dump | safe }},loop:{{ (v.loop or "") | dump | safe }},caption:{{ (v.caption or "") | dump | safe }}}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}], images: [{% for img in p.data.images %}"{{ img.url }}"{% if not loop.last %},{% endif %}{% endfor %}], imageAspects: [{% for img in p.data.images %}"{{ img.aspect | default('landscape') }}"{% if not loop.last %},{% endif %}{% endfor %}] }{% if not loop.last %},{% endif %}
 {% endfor %}
 ];
 
@@ -347,16 +350,50 @@ var YTLoops = (function() {
     entries.forEach(function(en) { if (en.isIntersecting) { io.unobserve(en.target); start(en.target); } });
   }, { rootMargin: '300px 0px' }) : null;
 
+  // ---- Self-hosted MP4 loops ----
+  // The file only downloads when it's about to scroll into view, plays while on
+  // screen and pauses off screen. The still fades the moment real frames arrive.
+  // If the browser refuses to autoplay (e.g. iPhone Low Power Mode), the still stays.
+  function playNative(el) {
+    var v = el.querySelector('video');
+    if (!v || postersOnly) return;
+    if (!el._nativeReady) {
+      el._nativeReady = true;
+      v.muted = true; v.defaultMuted = true;
+      v.addEventListener('timeupdate', function onT() {
+        if (v.currentTime > 0) { el.classList.add('is-playing'); v.removeEventListener('timeupdate', onT); }
+      });
+      v.src = el.getAttribute('data-src');
+    }
+    var pr = v.play();
+    if (pr && pr.catch) pr.catch(function() {});
+  }
+  function pauseNative(el) {
+    var v = el.querySelector('video');
+    if (v && !v.paused) v.pause();
+  }
+  var nativeIO = ('IntersectionObserver' in window) ? new IntersectionObserver(function(entries) {
+    entries.forEach(function(en) { if (en.isIntersecting) playNative(en.target); else pauseNative(en.target); });
+  }, { rootMargin: '200px 0px' }) : null;
+
   function scan(root) {
     (root || document).querySelectorAll('.yt-loop').forEach(function(el) {
       var img = el.querySelector('.yt-poster');
       if (img) fixPoster(img);
+      if (el.hasAttribute('data-src')) { if (nativeIO) nativeIO.observe(el); else playNative(el); return; }
       if (io) io.observe(el); else start(el);
     });
   }
 
   function stop(root) {
     (root || document).querySelectorAll('.yt-loop').forEach(function(el) {
+      if (el.hasAttribute('data-src')) {
+        if (nativeIO) nativeIO.unobserve(el);
+        var v = el.querySelector('video');
+        if (v) { v.pause(); v.removeAttribute('src'); v.load(); }
+        el._nativeReady = false;
+        return;
+      }
       if (io) io.unobserve(el);
       clearInterval(el._revealTimer); clearInterval(el._loopTimer);
       if (el._player && el._player.destroy) { try { el._player.destroy(); } catch (e) {} }
@@ -368,7 +405,11 @@ var YTLoops = (function() {
     return '<div class="yt-loop" data-yt="' + id + '"><div class="yt-mount"></div><img class="yt-poster" src="' + escAttr(poster) + '" alt="' + escAttr(alt) + '" decoding="async"></div>';
   }
 
-  return { scan: scan, stop: stop, html: html };
+  function nativeHtml(src, poster, alt) {
+    return '<div class="yt-loop" data-src="' + escAttr(src) + '"><video muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1"></video><img class="yt-poster" src="' + escAttr(poster) + '" alt="' + escAttr(alt) + '" decoding="async"></div>';
+  }
+
+  return { scan: scan, stop: stop, html: html, nativeHtml: nativeHtml };
 })();
 YTLoops.scan(document.getElementById('frontPage'));
 
@@ -383,7 +424,7 @@ function openDetail(idx) {
   var videoHTML = '';
   var allVideos = [];
   if (p.videos && p.videos.length > 0) {
-    p.videos.forEach(function(v) { allVideos.push({url: v.url, caption: v.caption}); });
+    p.videos.forEach(function(v) { allVideos.push({url: v.url, loop: v.loop, caption: v.caption}); });
   }
   if (allVideos.length === 0 && p.videoUrl) {
     allVideos.push({url: p.videoUrl, caption: ''});
@@ -393,8 +434,9 @@ function openDetail(idx) {
     var vm = v.url && v.url.match(/vimeo\.com\/(\d+)/);
     if (yt) {
       var poster = (vi === 0 && p.poster) ? p.poster : 'https://i.ytimg.com/vi/' + yt + '/maxresdefault.jpg';
+      var loopFile = v.loop || (vi === 0 ? p.loopVideo : '');
       videoHTML += '<a class="detail-video-wrapper detail-video-link" href="https://www.youtube.com/watch?v=' + yt + '" target="_blank" rel="noopener" aria-label="Watch ' + escAttr(p.name) + ' on YouTube">'
-        + YTLoops.html(yt, poster, p.name)
+        + (loopFile ? YTLoops.nativeHtml(loopFile, poster, p.name) : YTLoops.html(yt, poster, p.name))
         + '<span class="detail-video-cta">Watch on YouTube &#8599;</span></a>';
     } else if (vm) {
       videoHTML += '<a class="detail-video-wrapper detail-video-link" href="https://vimeo.com/' + vm[1] + '" target="_blank" rel="noopener" aria-label="Watch ' + escAttr(p.name) + ' on Vimeo">'

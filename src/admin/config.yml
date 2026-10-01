@@ -30,6 +30,7 @@ collections:
         required: false
       - { label: "Thumbnail Caption", name: "thumbnail_caption", widget: "string", required: false }
       - { label: "Thumbnail Video URL", name: "thumbnail_video_url", widget: "string", required: false, hint: "YouTube or Vimeo URL to use as the thumbnail instead of an image. Autoplays muted and loops." }
+      - { label: "Front Page Loop (MP4)", name: "loop_video", widget: "file", required: false, hint: "Short silent MP4 (10-15 sec, 1080p, under ~5MB). Plays on the front page with no YouTube player. Also used for the first video on the project page if that video has no loop of its own." }
       - { label: "Video URL (Legacy)", name: "video_url", widget: "string", required: false, hint: "Single video URL — use Videos list below instead for multiple videos." }
       - label: "Videos"
         name: "videos"
@@ -37,7 +38,8 @@ collections:
         required: false
         hint: "Add one or more YouTube or Vimeo URLs. These display as embedded videos on the project page."
         fields:
-          - { label: "Video URL", name: "url", widget: "string" }
+          - { label: "Video URL", name: "url", widget: "string", hint: "Where clicking the video takes people (opens in a new tab)." }
+          - { label: "Loop File (MP4)", name: "loop", widget: "file", required: false, hint: "Optional short silent MP4 shown on the project page instead of the YouTube player." }
           - { label: "Caption", name: "caption", widget: "string", required: false }
       - label: "Gallery Images"
         name: "images"

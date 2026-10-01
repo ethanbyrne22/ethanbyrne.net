@@ -125,6 +125,9 @@ img,video{max-width:100%;display:block}
 .yt-loop .yt-mount,.yt-loop iframe{position:absolute;left:0;top:-80px;width:100%;height:calc(100% + 160px);border:0;pointer-events:none}
 .yt-loop .yt-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;opacity:1;transition:opacity .6s ease;pointer-events:none}
 .yt-loop.is-playing .yt-poster{opacity:0}
+/* Self-hosted loop: a plain <video> with no player interface at all. */
+.yt-loop video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.yt-loop video::-webkit-media-controls,.yt-loop video::-webkit-media-controls-start-playback-button{display:none!important;-webkit-appearance:none}
 .colophon{border-top:2px solid var(--text);margin-top:16px;padding:10px 0 32px;display:flex;justify-content:space-between;align-items:center;font-family:var(--font-condensed);font-size:.78rem;font-weight:600;letter-spacing:.8px;color:var(--text);text-transform:uppercase}
 .colophon a{transition:opacity .2s}
 .colophon a:hover{opacity:.6}
