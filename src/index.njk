@@ -258,15 +258,40 @@ var YTLoops = (function() {
     document.head.appendChild(s);
   }
 
-  function reveal(el, player) {
-    // Wait until the playhead is actually moving so we never reveal a black frame.
+  // ---- Settings you can tweak ----
+  // How many seconds of playback before the still fades away. YouTube flashes its
+  // pause button for the first couple of seconds of play; this waits it out.
+  var REVEAL_AFTER = 3.5;
+  // If YouTube's buttons ever flash at the loop point, set this to true: the still
+  // will briefly dissolve back over the video while it jumps to the start.
+  var COVER_ON_LOOP = false;
+
+  // Fade the still away once the video has been playing long enough.
+  function watchReveal(el, player) {
+    clearInterval(el._revealTimer);
     var tries = 0;
-    (function check() {
+    el._revealTimer = setInterval(function() {
       var t = 0;
       try { t = player.getCurrentTime(); } catch (e) {}
-      if (t > 0.15) { el.classList.add('is-playing'); return; }
-      if (++tries < 40) setTimeout(check, 100);
-    })();
+      if (t >= REVEAL_AFTER) { clearInterval(el._revealTimer); el.classList.add('is-playing'); }
+      else if (++tries > 200) clearInterval(el._revealTimer); // give up after ~40s; still stays
+    }, 200);
+  }
+
+  // Loop by jumping back to the start just before the end, so YouTube never
+  // reaches its "ended" state (that's what triggers its end-screen buttons).
+  function watchLoop(el, player) {
+    clearInterval(el._loopTimer);
+    el._loopTimer = setInterval(function() {
+      var t = 0, d = 0;
+      try { t = player.getCurrentTime(); d = player.getDuration(); } catch (e) { return; }
+      if (d > 1 && t >= d - 0.4) {
+        if (COVER_ON_LOOP) { el.classList.remove('is-playing'); }
+        player.seekTo(0, true);
+        player.playVideo();
+        if (COVER_ON_LOOP) watchReveal(el, player);
+      }
+    }, 150);
   }
 
   function start(el) {
@@ -280,16 +305,20 @@ var YTLoops = (function() {
       el._player = new YT.Player(mount, {
         videoId: id,
         host: 'https://www.youtube-nocookie.com',
+        // No loop/playlist settings: those make YouTube add skip buttons. We loop it ourselves.
         playerVars: {
-          autoplay: 1, mute: 1, controls: 0, playsinline: 1, loop: 1, playlist: id,
+          autoplay: 1, mute: 1, controls: 0, playsinline: 1,
           rel: 0, disablekb: 1, fs: 0, iv_load_policy: 3, cc_load_policy: 0,
           origin: location.origin
         },
         events: {
           onReady: function(e) { e.target.mute(); e.target.playVideo(); },
           onStateChange: function(e) {
-            if (e.data === YT.PlayerState.PLAYING && !el.classList.contains('is-playing')) reveal(el, e.target);
-            if (e.data === YT.PlayerState.ENDED) { e.target.seekTo(0); e.target.playVideo(); }
+            if (e.data === YT.PlayerState.PLAYING) {
+              if (!el._revealStarted) { el._revealStarted = true; watchReveal(el, e.target); }
+              if (!el._loopTimer) watchLoop(el, e.target);
+            }
+            if (e.data === YT.PlayerState.ENDED) { e.target.seekTo(0, true); e.target.playVideo(); }
           }
         }
       });
@@ -322,8 +351,9 @@ var YTLoops = (function() {
   function stop(root) {
     (root || document).querySelectorAll('.yt-loop').forEach(function(el) {
       if (io) io.unobserve(el);
+      clearInterval(el._revealTimer); clearInterval(el._loopTimer);
       if (el._player && el._player.destroy) { try { el._player.destroy(); } catch (e) {} }
-      el._player = null;
+      el._player = null; el._loopTimer = null;
     });
   }
 
