@@ -17,10 +17,19 @@ layout: base.njk
   {% endif %}
 {% endfor %}
 
+{# Silent looping video. YouTube shows a still until it's actually playing; Vimeo falls back to a plain embed. #}
+{% macro videoLoop(url, poster, alt) %}
+  {% if url | isYouTube %}
+    <div class="yt-loop" data-yt="{{ url | videoId }}"><div class="yt-mount"></div><img class="yt-poster" src="{{ poster }}" alt="{{ alt }}" decoding="async"></div>
+  {% else %}
+    <iframe class="legacy-embed" src="{{ url | videoEmbed }}?autoplay=1&muted=1&loop=1&background=1" frameborder="0" allow="autoplay" loading="lazy"></iframe>
+  {% endif %}
+{% endmacro %}
+
 {# Macro for rendering a thumbnail (image or video) #}
 {% macro thumb(p) %}
   {% if p.data.thumbnail_video_url %}
-    <div class="story-video-thumb"><iframe src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+    <div class="story-video-thumb">{{ videoLoop(p.data.thumbnail_video_url, p.data | videoPoster(p.data.thumbnail_video_url), p.data.title) }}</div>
   {% else %}
     <img class="story-image {% if p.data.thumbnail_aspect == 'portrait' %}portrait{% elif p.data.thumbnail_aspect == 'square' %}square{% endif %}" src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
   {% endif %}
@@ -115,9 +124,9 @@ layout: base.njk
           <div class="story-byline">{{ p.data.brand }} · {{ p.data.role }}</div>
           <div class="hero-media-wrapper">
             {% if loop.index0 == 0 and site.hero_video_url %}
-              <iframe class="hero-video-iframe" src="{{ site.hero_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ site.hero_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>
+              {{ videoLoop(site.hero_video_url, p.data | videoPoster(site.hero_video_url), p.data.title) }}
             {% elif p.data.thumbnail_video_url %}
-              <iframe class="hero-video-iframe" src="{{ p.data.thumbnail_video_url | videoEmbed }}?autoplay=1&mute=1&loop=1&playlist={{ p.data.thumbnail_video_url | videoId }}&controls=0&playsinline=1&rel=0&showinfo=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe>
+              {{ videoLoop(p.data.thumbnail_video_url, p.data | videoPoster(p.data.thumbnail_video_url), p.data.title) }}
             {% else %}
               <img src="{{ p.data.thumbnail }}" alt="{{ p.data.title }}">
             {% endif %}
@@ -216,9 +225,115 @@ layout: base.njk
 <script>
 var PROJECTS = [
 {% for p in allProjects %}
-  { name: {{ p.data.title | dump | safe }}, brand: {{ p.data.brand | dump | safe }}, role: {{ p.data.role | dump | safe }}, kicker: {{ p.data.kicker | dump | safe }}, date: {{ (p.data.date or "") | dump | safe }}, description: {{ p.data.description | dump | safe }}, videoUrl: {{ (p.data.video_url or "") | dump | safe }}, videos: [{% if p.data.videos %}{% for v in p.data.videos %}{url:{{ v.url | dump | safe }},caption:{{ (v.caption or "") | dump | safe }}}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}], images: [{% for img in p.data.images %}"{{ img.url }}"{% if not loop.last %},{% endif %}{% endfor %}], imageAspects: [{% for img in p.data.images %}"{{ img.aspect | default('landscape') }}"{% if not loop.last %},{% endif %}{% endfor %}] }{% if not loop.last %},{% endif %}
+  {% if p.data.videos and (p.data.videos | length) %}{% set firstVid = p.data.videos[0].url %}{% else %}{% set firstVid = p.data.video_url or "" %}{% endif %}
+  { poster: {{ (p.data | videoPoster(firstVid)) | dump | safe }}, name: {{ p.data.title | dump | safe }}, brand: {{ p.data.brand | dump | safe }}, role: {{ p.data.role | dump | safe }}, kicker: {{ p.data.kicker | dump | safe }}, date: {{ (p.data.date or "") | dump | safe }}, description: {{ p.data.description | dump | safe }}, videoUrl: {{ (p.data.video_url or "") | dump | safe }}, videos: [{% if p.data.videos %}{% for v in p.data.videos %}{url:{{ v.url | dump | safe }},caption:{{ (v.caption or "") | dump | safe }}}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}], images: [{% for img in p.data.images %}"{{ img.url }}"{% if not loop.last %},{% endif %}{% endfor %}], imageAspects: [{% for img in p.data.images %}"{{ img.aspect | default('landscape') }}"{% if not loop.last %},{% endif %}{% endfor %}] }{% if not loop.last %},{% endif %}
 {% endfor %}
 ];
+
+
+/* ============ SILENT LOOPING YOUTUBE VIDEOS ============
+   Each .yt-loop shows a still image on top. The YouTube player loads underneath,
+   and the still only fades away once the video has real frames playing. If the
+   video never starts (slow connection, iPhone Low Power Mode, data saver), the
+   still simply stays put, so visitors never see YouTube's buttons or logo. */
+var YTLoops = (function() {
+  var apiQueue = [], apiRequested = false;
+  var conn = navigator.connection || {};
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var postersOnly = !!(conn.saveData || /(^|-)2g$/.test(conn.effectiveType || '') || reduceMotion);
+
+  function withAPI(cb) {
+    if (window.YT && window.YT.Player) return cb();
+    apiQueue.push(cb);
+    if (apiRequested) return;
+    apiRequested = true;
+    var prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function() {
+      if (prev) prev();
+      apiQueue.splice(0).forEach(function(f) { f(); });
+    };
+    var s = document.createElement('script');
+    s.src = 'https://www.youtube.com/iframe_api';
+    s.async = true;
+    document.head.appendChild(s);
+  }
+
+  function reveal(el, player) {
+    // Wait until the playhead is actually moving so we never reveal a black frame.
+    var tries = 0;
+    (function check() {
+      var t = 0;
+      try { t = player.getCurrentTime(); } catch (e) {}
+      if (t > 0.15) { el.classList.add('is-playing'); return; }
+      if (++tries < 40) setTimeout(check, 100);
+    })();
+  }
+
+  function start(el) {
+    if (el._ytStarted || postersOnly) return;
+    el._ytStarted = true;
+    var id = el.getAttribute('data-yt');
+    var mount = el.querySelector('.yt-mount');
+    if (!id || !mount) return;
+    withAPI(function() {
+      if (!el.isConnected) return;
+      el._player = new YT.Player(mount, {
+        videoId: id,
+        host: 'https://www.youtube-nocookie.com',
+        playerVars: {
+          autoplay: 1, mute: 1, controls: 0, playsinline: 1, loop: 1, playlist: id,
+          rel: 0, disablekb: 1, fs: 0, iv_load_policy: 3, cc_load_policy: 0,
+          origin: location.origin
+        },
+        events: {
+          onReady: function(e) { e.target.mute(); e.target.playVideo(); },
+          onStateChange: function(e) {
+            if (e.data === YT.PlayerState.PLAYING && !el.classList.contains('is-playing')) reveal(el, e.target);
+            if (e.data === YT.PlayerState.ENDED) { e.target.seekTo(0); e.target.playVideo(); }
+          }
+        }
+      });
+      var frame = el.querySelector('iframe');
+      if (frame) { frame.setAttribute('tabindex', '-1'); frame.setAttribute('aria-hidden', 'true'); }
+    });
+  }
+
+  // If YouTube has no hi-res frame grab, it returns a tiny grey placeholder; swap to the standard one.
+  function fixPoster(img) {
+    if (!/maxresdefault\.jpg$/.test(img.src)) return;
+    var swap = function() { if (img.naturalWidth && img.naturalWidth <= 120) img.src = img.src.replace('maxresdefault', 'hqdefault'); };
+    if (img.complete) swap(); else img.addEventListener('load', swap, { once: true });
+    img.addEventListener('error', function() { img.src = img.src.replace('maxresdefault', 'hqdefault'); }, { once: true });
+  }
+
+  // Only load a player when its video is near the screen; saves bandwidth on slow connections.
+  var io = ('IntersectionObserver' in window) ? new IntersectionObserver(function(entries) {
+    entries.forEach(function(en) { if (en.isIntersecting) { io.unobserve(en.target); start(en.target); } });
+  }, { rootMargin: '300px 0px' }) : null;
+
+  function scan(root) {
+    (root || document).querySelectorAll('.yt-loop').forEach(function(el) {
+      var img = el.querySelector('.yt-poster');
+      if (img) fixPoster(img);
+      if (io) io.observe(el); else start(el);
+    });
+  }
+
+  function stop(root) {
+    (root || document).querySelectorAll('.yt-loop').forEach(function(el) {
+      if (io) io.unobserve(el);
+      if (el._player && el._player.destroy) { try { el._player.destroy(); } catch (e) {} }
+      el._player = null;
+    });
+  }
+
+  function html(id, poster, alt) {
+    return '<div class="yt-loop" data-yt="' + id + '"><div class="yt-mount"></div><img class="yt-poster" src="' + escAttr(poster) + '" alt="' + escAttr(alt) + '" decoding="async"></div>';
+  }
+
+  return { scan: scan, stop: stop, html: html };
+})();
+YTLoops.scan(document.getElementById('frontPage'));
 
 document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -236,15 +351,23 @@ function openDetail(idx) {
   if (allVideos.length === 0 && p.videoUrl) {
     allVideos.push({url: p.videoUrl, caption: ''});
   }
-  allVideos.forEach(function(v) {
-    var embedSrc = parseVideoUrl(v.url);
-    if (embedSrc) {
-      var vid = v.url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-      var playlist = vid ? '&playlist=' + vid[1] : '';
-      videoHTML += '<div class="detail-video-wrapper"><iframe src="' + embedSrc + '?autoplay=1&mute=1&loop=1' + playlist + '&rel=0&modestbranding=1&playsinline=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>';
-      if (v.caption) {
-        videoHTML += '<div class="detail-video-caption">' + v.caption + '</div>';
-      }
+  allVideos.forEach(function(v, vi) {
+    var yt = youTubeId(v.url);
+    var vm = v.url && v.url.match(/vimeo\.com\/(\d+)/);
+    if (yt) {
+      var poster = (vi === 0 && p.poster) ? p.poster : 'https://i.ytimg.com/vi/' + yt + '/maxresdefault.jpg';
+      videoHTML += '<a class="detail-video-wrapper detail-video-link" href="https://www.youtube.com/watch?v=' + yt + '" target="_blank" rel="noopener" aria-label="Watch ' + escAttr(p.name) + ' on YouTube">'
+        + YTLoops.html(yt, poster, p.name)
+        + '<span class="detail-video-cta">Watch on YouTube &#8599;</span></a>';
+    } else if (vm) {
+      videoHTML += '<a class="detail-video-wrapper detail-video-link" href="https://vimeo.com/' + vm[1] + '" target="_blank" rel="noopener" aria-label="Watch ' + escAttr(p.name) + ' on Vimeo">'
+        + '<iframe src="https://player.vimeo.com/video/' + vm[1] + '?autoplay=1&muted=1&loop=1&background=1" frameborder="0" allow="autoplay"></iframe>'
+        + '<span class="detail-video-cta">Watch on Vimeo &#8599;</span></a>';
+    } else {
+      return;
+    }
+    if (v.caption) {
+      videoHTML += '<div class="detail-video-caption">' + v.caption + '</div>';
     }
   });
 
@@ -273,6 +396,7 @@ function openDetail(idx) {
   }
 
   content.innerHTML = '<div class="detail-kicker">' + p.kicker + '</div><div class="detail-title">' + p.name + '</div><div class="detail-byline-block"><div class="detail-client">' + p.brand + ' · ' + p.role + '</div>' + (dateStr ? '<div class="detail-date">' + dateStr + '</div>' : '') + '</div><div class="detail-description">' + p.description + '</div>' + videoHTML + '<div class="detail-gallery">' + galleryHTML + '</div>';
+  YTLoops.scan(content);
   overlay.classList.add('active');
   overlay.scrollTop = 0;
   document.body.style.overflow = 'hidden';
@@ -286,7 +410,16 @@ function parseVideoUrl(url) {
   if (vmMatch) return 'https://player.vimeo.com/video/' + vmMatch[1];
   return null;
 }
-function closeDetail() { document.getElementById('detailOverlay').classList.remove('active'); document.body.style.overflow = ''; }
+function youTubeId(url) {
+  var m = (url || '').match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+function escAttr(str) { return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+  YTLoops.stop(document.getElementById('detailContent'));
+}
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDetail(); });
 
 (function() {

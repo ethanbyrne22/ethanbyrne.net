@@ -36,6 +36,28 @@ module.exports = function(eleventyConfig) {
     return "";
   });
 
+  // Filter: is this a YouTube URL?
+  eleventyConfig.addFilter("isYouTube", function(url) {
+    return !!(url && /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)[a-zA-Z0-9_-]{11}/.test(url));
+  });
+
+  // Filter: pick the still image shown while a video loads (or if it never plays).
+  // Order: landscape thumbnail -> first landscape gallery image -> any thumbnail
+  // -> first gallery image -> YouTube's own frame grab (a plain JPG, no UI).
+  eleventyConfig.addFilter("videoPoster", function(data, url) {
+    data = data || {};
+    var aspectOf = function(a) { return a || "landscape"; };
+    if (data.thumbnail && aspectOf(data.thumbnail_aspect) === "landscape") return data.thumbnail;
+    var imgs = data.images || [];
+    for (var i = 0; i < imgs.length; i++) {
+      if (imgs[i] && imgs[i].url && aspectOf(imgs[i].aspect) === "landscape") return imgs[i].url;
+    }
+    if (data.thumbnail) return data.thumbnail;
+    if (imgs[0] && imgs[0].url) return imgs[0].url;
+    var yt = (url || "").match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    return yt ? "https://i.ytimg.com/vi/" + yt[1] + "/maxresdefault.jpg" : "";
+  });
+
   // Filter: display date nicely
   eleventyConfig.addFilter("dateDisplay", function(dateObj) {
     if (!dateObj) return "";
