@@ -261,7 +261,7 @@ var YTLoops = (function() {
   // ---- Settings you can tweak ----
   // How many seconds of playback before the still fades away. YouTube flashes its
   // pause button for the first couple of seconds of play; this waits it out.
-  var REVEAL_AFTER = 3.5;
+  var REVEAL_AFTER = 1.0;
   // If YouTube's buttons ever flash at the loop point, set this to true: the still
   // will briefly dissolve back over the video while it jumps to the start.
   var COVER_ON_LOOP = false;
@@ -312,7 +312,14 @@ var YTLoops = (function() {
           origin: location.origin
         },
         events: {
-          onReady: function(e) { e.target.mute(); e.target.playVideo(); },
+          onReady: function(e) {
+            e.target.mute();
+            // Let YouTube's own autoplay start the video. Calling playVideo() ourselves
+            // may be what triggers its pause-button animation; only nudge it if autoplay stalls.
+            setTimeout(function() {
+              try { if (e.target.getPlayerState() !== YT.PlayerState.PLAYING) e.target.playVideo(); } catch (err) {}
+            }, 2000);
+          },
           onStateChange: function(e) {
             if (e.data === YT.PlayerState.PLAYING) {
               if (!el._revealStarted) { el._revealStarted = true; watchReveal(el, e.target); }
