@@ -19,6 +19,7 @@ description: >-
 thumbnail: /assets/uploads/nycfc_xylem_ethan_byrne_04.jpg
 thumbnail_aspect: landscape
 thumbnail_video_url: https://youtu.be/86oskezPzKs
+loop_video: /assets/uploads/nycfc-stringout-loop.mp4
 video_url: ""
 videos:
   - url: https://youtu.be/86oskezPzKs
