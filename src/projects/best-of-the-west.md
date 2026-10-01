@@ -24,6 +24,7 @@ description: >-
 thumbnail: /assets/uploads/ninja-creami-stills-03.jpg
 thumbnail_aspect: landscape
 thumbnail_video_url: https://www.youtube.com/watch?v=XYVK_MJ7D5U
+loop_video: /assets/uploads/meet-the-creami®-diet：-keep-your-resolutions-and-your-ice-cream-loop.mp4
 videos:
   - url: https://www.youtube.com/watch?v=XYVK_MJ7D5U
 images:
