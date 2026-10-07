@@ -7,31 +7,27 @@ eleventyExcludeFromCollections: true
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex, nofollow"></head><body><title>HiChord Playground</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&family=Schibsted+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
-/* Layout: the instrument as an object on a cool workbench. Device + its menus up top, the recorder as a strip of lanes, the MPK's pads and knobs mirrored below. */
+/* Layout: a printed manual for a hardware toy. Warm paper page, SF type, one orange accent, the instrument drawn as a charcoal body with putty keycaps, and numbered sections like a manual's chapters. */
 :root{
-  --bg:#e5e9ed; --shell:#fafbfa; --shell-edge:#d1d8dd; --ink:#1b2126; --muted:#626c76; --line:#d6dce1;
-  --cap:#ffffff; --cap-edge:#c7cfd5; --cap-down:#e9edf0; --cap-shadow:rgba(30,40,50,.16);
-  --m-gray:#8e98a2; --m-yellow:#efbc2a; --m-red:#dc4236; --rec-tint:rgba(220,66,54,.09); --live:#2fa36b;
-  --oled:#05080a; --oled-ink:#d4f2ff; --oled-dim:#47616e;
-  --key-w:#ffffff; --key-b:#21272c; --hit:#dc4236; --hit-bass:#efbc2a;
-  --chip:#eef1f4; --chip-ink:#2a3238; --chip-on:#1b2126; --chip-on-ink:#ffffff;
-  --f-ui:"Schibsted Grotesk", system-ui, -apple-system, sans-serif;
-  --f-px:"Pixelify Sans", ui-monospace, Menlo, monospace;
-  --f-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+  --bg:#FAFAF7; --s1:#FFFFFF; --s2:#F3F1EC; --border:#E5E0D8; --ink:#1C1917; --t2:#57534E; --muted:#8A857F;
+  --accent:#E07838; --accent-dim:rgba(224,120,56,.08);
+  --m-gray:#B8B4AC; --m-yellow:#E8B730; --m-red:#D93636; --live:#22A652;
+  --body-hi:#302e2b; --body-lo:#222120; --body-ink:#ECE7DE; --body-dim:#9C968D; --body-ctl:#3a3835; --body-edge:#151413;
+  --cap-top:#E4E0D6; --cap-bot:#CCC8BE; --cap-edge:#B0ACA4;
+  /* names the rest of the page uses */
+  --shell:var(--s1); --shell-edge:var(--border); --line:var(--border);
+  --cap:var(--cap-top); --cap-down:#d6d2c8; --cap-shadow:rgba(28,25,23,.18); --rec-tint:rgba(217,54,54,.06);
+  --oled:#0c0c0b; --oled-ink:#F4EFE6; --oled-dim:#77716a;
+  --key-w:#FEFEFE; --key-b:#1C1917; --hit:var(--accent); --hit-bass:var(--m-yellow);
+  --chip:var(--s2); --chip-ink:var(--ink); --chip-on:var(--ink); --chip-on-ink:var(--bg);
+  --f-ui:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter",system-ui,sans-serif;
+  --f-px:"SF Mono","JetBrains Mono",ui-monospace,Menlo,monospace;
+  --f-mono:"SF Mono","JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#111417; --shell:#1c2024; --shell-edge:#2b3136; --ink:#e6eaed; --muted:#8f99a2; --line:#2c3237;
-  --cap:#2a3035; --cap-edge:#3b4248; --cap-down:#22272b; --cap-shadow:rgba(0,0,0,.45); --rec-tint:rgba(220,66,54,.16);
-  --key-w:#d8dde1; --key-b:#0a0c0e; --chip:#252a2f; --chip-ink:#d5dbe0; --chip-on:#e6eaed; --chip-on-ink:#111417;
-  color-scheme:dark }}
-:root[data-theme="dark"]{
-  --bg:#111417; --shell:#1c2024; --shell-edge:#2b3136; --ink:#e6eaed; --muted:#8f99a2; --line:#2c3237;
-  --cap:#2a3035; --cap-edge:#3b4248; --cap-down:#22272b; --cap-shadow:rgba(0,0,0,.45); --rec-tint:rgba(220,66,54,.16);
-  --key-w:#d8dde1; --key-b:#0a0c0e; --chip:#252a2f; --chip-ink:#d5dbe0; --chip-on:#e6eaed; --chip-on-ink:#111417;
-  color-scheme:dark }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:24px 48px}
 .wrap{max-width:1160px;margin:0 auto;display:grid;gap:20px}
@@ -188,14 +184,108 @@ kbd{font:600 11px var(--f-mono);border:1px solid var(--line);border-bottom-width
 .prog .chip b{font:600 14px var(--f-mono)}
 .prog .chip small{font-size:11px;opacity:.75}
 @media (prefers-reduced-motion:reduce){.pad,.knob,.dpad{transition:none}}
+
+/* ===== manual look ===== */
+body{background:var(--bg);-webkit-font-smoothing:antialiased;font-size:15px}
+.wrap{gap:28px}
+header{display:grid;justify-items:center;text-align:center;gap:10px;padding-block:20px 6px}
+header .rev{font:500 12px var(--f-mono);letter-spacing:1.2px;color:var(--accent);text-transform:uppercase;border:1px solid rgba(224,120,56,.35);background:var(--accent-dim);border-radius:980px;padding:5px 14px}
+header h1{font-size:44px;font-weight:700;letter-spacing:-1.6px;line-height:1.05}
+header p{color:var(--t2);max-width:56ch;margin:0;font-size:16px}
+.no{display:inline-grid;place-items:center;min-width:28px;height:20px;padding:0 6px;border-radius:5px;background:var(--accent);color:#fff;font:700 11px var(--f-mono);letter-spacing:.4px;flex:none}
+.sec-h{display:flex;align-items:center;gap:12px;margin-bottom:-14px}
+.sec-h h2{margin:0;font-size:24px;font-weight:700;letter-spacing:-.7px}
+.sec-h span.sub{color:var(--muted);font-size:14px}
+.card,.panel,.pianobox{background:var(--s1);border:1px solid var(--border);border-radius:14px;box-shadow:none}
+.card-h h3,.panel h2,.help h3{font:700 17px var(--f-ui);letter-spacing:-.3px;text-transform:none;color:var(--ink);display:flex;align-items:center;gap:10px;margin:0}
+.help h3{margin-bottom:12px}
+.row>span,.tgroup>span,.pcap{color:var(--muted);font-size:12px;letter-spacing:0}
+.hint{color:var(--muted)}
+.chip{background:var(--s2);border:1px solid transparent;color:var(--ink);border-radius:8px;font:500 13px var(--f-ui)}
+.chip:hover{border-color:var(--border)}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn{background:var(--s2);border:1px solid transparent;color:var(--ink);font:600 12px var(--f-mono);border-radius:8px}
+.btn:hover:not(:disabled){border-color:var(--border)}
+.btn.on{background:var(--ink);color:var(--bg)}
+kbd{background:var(--s1);border:1px solid var(--border);border-bottom-width:2px;color:var(--t2);font-family:var(--f-mono)}
+.slider input,.trk .vl,.vol input{accent-color:var(--accent)}
+.slider output,.kn output{font-family:var(--f-mono);color:var(--muted)}
+/* the instrument */
+.device{background:linear-gradient(180deg,var(--body-hi),var(--body-lo));border:1px solid var(--body-edge);border-radius:26px;color:var(--body-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 28px 44px -26px rgba(28,25,23,.55)}
+.device .hint{color:var(--body-dim)}
+.device kbd{background:var(--body-ctl);border-color:#4a4744;color:var(--body-ink)}
+.device .btn{background:var(--body-ctl);color:var(--body-ink);border:1px solid #4a4744}
+.device .btn:hover{border-color:#6a6560}
+.device .btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.screen{background:var(--oled);border:1px solid #000;border-radius:8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),inset 0 6px 18px rgba(0,0,0,.6)}
+.scr-row{font:500 11px var(--f-mono);letter-spacing:1px;color:var(--oled-dim)}
+.scr-row b{color:var(--oled-ink);font-weight:600}
+.scr-row .rd{color:#ff6b57}
+.chordname{font:700 44px var(--f-ui);letter-spacing:-1.4px;color:var(--oled-ink)}
+#scope{opacity:.35}
+.menu{width:72px;height:26px;border-radius:980px;font:700 10px var(--f-mono);letter-spacing:1px;color:var(--ink);box-shadow:0 2px 0 rgba(0,0,0,.45);opacity:.7;border:0}
+.menu.gray{background:var(--m-gray)}.menu.yellow{background:var(--m-yellow)}.menu.red{background:var(--m-red);color:#fff}
+.menu[aria-selected="true"]{opacity:1;outline:2px solid var(--body-ink);outline-offset:2px}
+.vol{color:var(--body-dim)}
+.pad{background:linear-gradient(var(--cap-top),var(--cap-bot));border:0;border-radius:10px;color:#444;box-shadow:0 3px 0 var(--cap-edge),0 8px 14px rgba(0,0,0,.4)}
+.pad .n{font:800 20px var(--f-mono);color:#444}
+.pad .c{font:600 12px var(--f-ui);color:#77716a}
+.pad .tag{color:var(--accent)}
+.pad.down{transform:translateY(3px);background:linear-gradient(#d4d0c6,#c2beb4);box-shadow:0 0 0 var(--cap-edge),0 2px 6px rgba(0,0,0,.35)}
+.stick{background:radial-gradient(circle at 50% 50%,#1b1a19 0 33%,transparent 34%),#2a2927;border:1px solid var(--body-edge);box-shadow:inset 0 3px 10px rgba(0,0,0,.55)}
+.stick .lbl{color:#8f897f;font:600 10px var(--f-mono)}
+.stick .lbl.on{color:var(--accent)}
+.knob{background:radial-gradient(circle at 40% 32%,#5c5853,#2a2927 72%);box-shadow:0 5px 12px rgba(0,0,0,.55)}
+/* recorder */
+.tbtn{background:var(--s2);border:1px solid transparent;color:var(--ink);font:600 13px var(--f-mono);border-radius:10px}
+.tbtn.play.on{background:var(--ink);color:var(--bg)}
+.tbtn.rec .ic{background:var(--m-red)}
+.tbtn.rec.arm{border-color:var(--m-red);color:var(--m-red);background:var(--rec-tint)}
+.tbtn.rec.live{background:var(--m-red);color:#fff}
+.pos{font:700 20px var(--f-mono);letter-spacing:-.5px}
+.rstat.live{color:var(--m-red)}
+.trk{border-radius:10px}
+.trk.sel{border-color:var(--ink)}
+.trk.recording{background:var(--rec-tint);border-color:var(--m-red)}
+.trk .num{background:var(--s2);color:var(--t2);font:700 12px var(--f-mono)}
+.trk.sel .num{background:var(--ink);color:var(--bg)}
+.trk.recording .num{background:var(--m-red);color:#fff}
+.trk .nm b{font-weight:600}
+.lane{background:var(--s2)}
+.trk .btn.m.on{background:var(--m-yellow);color:var(--ink)}
+.trk .btn.s.on{background:var(--live);color:#fff}
+.lane::after,.sph{background:var(--accent)}
+.slbl{font-family:var(--f-mono)}
+/* pads & knobs */
+.dpad{background:linear-gradient(var(--body-hi),var(--body-lo));border:1px solid var(--body-edge);color:var(--body-ink);border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.dpad small{font-family:var(--f-mono);color:var(--body-dim);opacity:1}
+.dpad b{font-weight:600}
+.dpad.hit{background:var(--accent);border-color:var(--accent);color:#fff}
+.dpad.hit small{color:#fff}
+.ring{background:conic-gradient(from 225deg,var(--accent) calc(var(--v)*270deg),var(--border) calc(var(--v)*270deg) 270deg,transparent 270deg)}
+.dial{background:radial-gradient(circle at 40% 32%,#5c5853,#2a2927 72%);box-shadow:0 4px 10px rgba(28,25,23,.35)}
+.dial i{background:var(--oled-ink)}
+.kn b{font-weight:600}
+.kn .learn{font-family:var(--f-mono);border-color:var(--border);color:var(--muted)}
+.kn .learn.on{border-color:var(--accent);color:var(--accent)}
+/* readouts */
+.mon{background:var(--s2);color:var(--t2)}
+.mstat.live::before{background:var(--live);box-shadow:0 0 0 3px rgba(34,166,82,.18)}
+.wk{border-color:var(--border)}
+.wk small{font-family:var(--f-mono);color:var(--muted)}
+.keys dt{font-family:var(--f-mono)}
+.keys dd{color:var(--t2)}
+.prog .chip b{font-family:var(--f-mono)}
 </style>
 
 <div class="wrap">
   <header>
+    <span class="rev">Playground · Rev 1.0</span>
     <h1>HiChord Playground</h1>
     <p>Seven diatonic chord buttons, an eight-way stick that recolors whatever you're holding, an 808 kit, and an eight-track loop recorder.</p>
   </header>
 
+  <div class="sec-h"><span class="no">01</span><h2>Play</h2><span class="sub">Hold a number, push the stick.</span></div>
   <div class="top">
     <section class="device" aria-label="Instrument">
       <div class="dev-top">
@@ -228,6 +318,7 @@ kbd{font:600 11px var(--f-mono);border:1px solid var(--line);border-bottom-width
     <section class="panel" id="panel" aria-live="polite"></section>
   </div>
 
+  <div class="sec-h"><span class="no">02</span><h2>Record</h2><span class="sub">Layer loops, then arrange them into a song.</span></div>
   <section class="card" id="recorder" aria-label="Recorder">
     <div class="transport">
       <div class="tgroup" id="gMode"></div>
@@ -262,14 +353,14 @@ kbd{font:600 11px var(--f-mono);border:1px solid var(--line);border-bottom-width
 
   <div class="mpk">
     <section class="card" aria-label="Drum pads">
-      <div class="card-h"><h3>808 pads</h3><span class="hint">Keys <kbd>Z</kbd>–<kbd>,</kbd></span></div>
+      <div class="card-h"><h3><span class="no">03</span>808 pads</h3><span class="hint">Keys <kbd>Z</kbd>–<kbd>,</kbd></span></div>
       <div class="dpads" id="dpads"></div>
       <div class="row"><span>Drum level · K8</span><div class="slider" id="drumLvl"></div></div>
       <div class="util"><button class="btn" id="bPadLearn">Learn pads</button><button class="btn" id="bPadReset">Reset to channel 10</button></div>
       <p class="hint" id="padHint"></p>
     </section>
     <section class="card" aria-label="Knobs">
-      <div class="card-h"><h3>Knobs K1–K8</h3><span class="hint">Drag up or down, or turn the MPK's knobs.</span></div>
+      <div class="card-h"><h3><span class="no">04</span>Knobs K1–K8</h3><span class="hint">Drag up or down, or turn the MPK's knobs.</span></div>
       <div class="knobs" id="knobs"></div>
       <div class="util" style="align-items:center"><button class="btn" id="bKnobAll">Learn all</button><span class="hint">Knob type</span><div id="knobType"></div></div>
       <p class="hint" id="knobHint">Press Learn all, then turn K1, K2 … K8 in order. Relative (endless) knobs are detected automatically.</p>
@@ -277,18 +368,20 @@ kbd{font:600 11px var(--f-mono);border:1px solid var(--line);border-bottom-width
   </div>
 
   <section class="card" aria-label="Notes sounding">
-    <div class="pcap"><span>Notes sounding</span><span><span style="color:var(--hit)">■</span> chord &nbsp; <span style="color:var(--hit-bass)">■</span> bass</span></div>
+    <div class="pcap"><h3 style="margin:0;font:700 17px var(--f-ui);letter-spacing:-.3px;color:var(--ink);display:flex;gap:10px;align-items:center"><span class="no">05</span>Notes sounding</h3><span><span style="color:var(--hit)">■</span> chord &nbsp; <span style="color:var(--hit-bass)">■</span> bass</span></div>
     <div class="pscroll"><div class="piano" id="piano"></div></div>
   </section>
 
   <section class="card" aria-label="MIDI input">
     <div class="card-h">
-      <h3>MIDI input</h3>
+      <h3><span class="no">06</span>MIDI input</h3>
       <span class="mstat" id="midiStatus">Not connected. Plug in your controller and press Connect.</span>
       <button class="chip" id="bMidi">Connect MIDI</button>
     </div>
     <div class="midi-grid">
-      <div class="row"><span>Keys play</span><div id="midiKeys"></div><p class="hint" id="midiKeysHint"></p><div class="mon" id="midiMon">Last message: none yet</div></div>
+      <div class="row"><span>Keys play</span><div id="midiKeys"></div><p class="hint" id="midiKeysHint"></p>
+        <span style="margin-top:6px">Joystick</span><div class="util"><button class="btn" id="bStick">Set up stick</button><button class="btn" id="bStickReset">Reset stick</button></div><p class="hint" id="stickHint">If a direction does the wrong thing, press Set up stick and follow the four prompts.</p>
+        <div class="mon" id="midiMon">Last message: none yet</div></div>
       <dl class="keys">
         <dt>Octave −/+</dt><dd>Shifts what the keys send, so chords and melody move with it.</dd>
         <dt>Pads 1–8</dt><dd>808 kit: kick, snare, closed hat, open hat, clap, tom, rim, cowbell. Use Learn pads to match your MPK.</dd>
@@ -301,7 +394,7 @@ kbd{font:600 11px var(--f-mono);border:1px solid var(--line);border-bottom-width
 
   <div class="help">
     <section>
-      <h3>Keyboard</h3>
+      <h3><span class="no">07</span>Keyboard</h3>
       <dl class="keys">
         <dt><kbd>1</kbd>–<kbd>7</kbd></dt><dd>Chord buttons. Hold several to layer.</dd>
         <dt><kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd></dt><dd>The stick. Hold two arrows for diagonals.</dd>
@@ -313,7 +406,7 @@ kbd{font:600 11px var(--f-mono);border:1px solid var(--line);border-bottom-width
       </dl>
     </section>
     <section>
-      <h3>Progressions to try</h3>
+      <h3><span class="no">08</span>Progressions to try</h3>
       <div class="prog" id="prog"></div>
       <p class="hint" style="margin-top:8px">One chord per bar at the current tempo, in the current mode. Push the stick while it plays.</p>
     </section>
@@ -926,7 +1019,7 @@ function loadProject(p){
 function persist(){try{localStorage.setItem('hcp-session',JSON.stringify(projectData()))}catch(e){}}
 
 /* ================= stick ================= */
-const MIDI={access:null,x:0,y:0,held:new Map(),notes:new Map(),keys:'chords',split:60,splitLearn:false,raf:0,learnCC:null,learnAll:false,cc:[70,71,72,73,74,75,76,77],kmode:'auto',kst:{},padMap:{},padLearn:null,keyCh:new Set()};
+const MIDI={access:null,x:0,y:0,held:new Map(),notes:new Map(),keys:'chords',split:60,splitLearn:false,raf:0,learnCC:null,learnAll:false,cc:[70,71,72,73,74,75,76,77],kmode:'auto',kst:{},padMap:{},padLearn:null,keyCh:new Set(),axv:{},setup:null,stick:null};
 function midiDir(){const {x,y}=MIDI;if(Math.hypot(x,y)<.35)return null;return DIRS[((Math.round(Math.atan2(y,x)/(Math.PI/4))%8)+8)%8]}
 function keyDir(){
   const a=S.arrows, dx=(a.has('ArrowRight')?1:0)-(a.has('ArrowLeft')?1:0), dy=(a.has('ArrowUp')?1:0)-(a.has('ArrowDown')?1:0);
@@ -1353,7 +1446,7 @@ function drawLoop(){
 const mStat=$('midiStatus'), mMon=$('midiMon'), midiLog=[];
 const noteName=n=>NOTE[((n%12)+12)%12]+(Math.floor(n/12)-1);
 function midiStatus(t,live){mStat.textContent=t;mStat.classList.toggle('live',!!live)}
-function saveMidiPrefs(){try{localStorage.setItem('hcp-midi',JSON.stringify({pads:MIDI.padMap,cc:MIDI.cc,kmode:MIDI.kmode,keys:MIDI.keys,split:MIDI.split}))}catch(e){}}
+function saveMidiPrefs(){try{localStorage.setItem('hcp-midi',JSON.stringify({pads:MIDI.padMap,cc:MIDI.cc,kmode:MIDI.kmode,keys:MIDI.keys,split:MIDI.split,stick:MIDI.stick}))}catch(e){}}
 const velOf=v=>.35+.65*(v/127);
 function holdBtn(btn,src,vel,oct){
   MIDI.held.set(src,btn);
@@ -1418,20 +1511,76 @@ function knobIn(i,cc,v){
   }else applyKnob(i,v/127,true);
 }
 function logMsg(s){midiLog.unshift(s);midiLog.length=Math.min(midiLog.length,4);mMon.innerHTML=midiLog.map((l,k)=>`<div${k?' style="opacity:.6"':''}>${l}</div>`).join('')}
+/* stick: each direction is a rule {k: message key, r: rest value, e: extreme value, s: +1/-1}.
+   Defaults match the MPK factory setup (pitch bend left/right, CC1 up, CC2 down); "Set up stick" learns the real ones. */
+const STICK0={x:[{k:'pb',r:0,e:8191,s:1},{k:'pb',r:0,e:-8192,s:-1}],y:[{k:'cc1',r:0,e:127,s:1},{k:'cc2',r:0,e:127,s:-1}]};
+const stickHas=key=>['x','y'].some(a=>MIDI.stick[a].some(r=>r.k===key));
+function axisVal(a){
+  let best=0;
+  for(const r of MIDI.stick[a]){const v=MIDI.axv[r.k];if(v==null||r.e===r.r)continue;const f=(v-r.r)/(r.e-r.r);if(f>0){const amt=Math.min(1,f)*r.s;if(Math.abs(amt)>Math.abs(best))best=amt}}
+  return best;
+}
+function stickIn(key,v){MIDI.axv[key]=v;MIDI.x=axisVal('x');MIDI.y=axisVal('y');dirChanged()}
+const SETUP_STEPS=[['up','y',1,'UP'],['down','y',-1,'DOWN'],['left','x',-1,'LEFT'],['right','x',1,'RIGHT']];
+function stickSetupStart(){
+  ensureAudio(); clearTimeout(MIDI.setupT);
+  MIDI.setup={step:0,caps:{},seen:false};
+  renderStickSetup(); MIDI.setupT=setTimeout(stickSetupTimeout,9000);
+}
+function stickSetupTimeout(){if(!MIDI.setup)return;MIDI.setup=null;$('stickHint').textContent="Didn't hear the stick. Check that MIDI is connected, then try again.";renderStickSetup()}
+function stickSetupMsg(key,v){
+  const S2=MIDI.setup; const cap=S2.caps[S2.step]||(S2.caps[S2.step]={});
+  (cap[key]||(cap[key]=[])).push(v); S2.seen=true;
+  clearTimeout(MIDI.setupT); MIDI.setupT=setTimeout(stickSetupNext,700);
+}
+function stickSetupNext(){
+  const S2=MIDI.setup; if(!S2)return;
+  S2.step++;
+  if(S2.step<SETUP_STEPS.length){renderStickSetup();MIDI.setupT=setTimeout(stickSetupTimeout,9000);return}
+  // derive one rule per direction from what moved most
+  const rules={x:[],y:[]}, picked=[];
+  SETUP_STEPS.forEach(([name,axis,sign],i)=>{
+    const cap=S2.caps[i]||{}; let best=null;
+    for(const k in cap){
+      const vals=cap[k], rest=vals[vals.length-1], range=k==='pb'?8192:127;
+      const ext=vals.reduce((m,x)=>Math.abs(x-rest)>Math.abs(m-rest)?x:m,rest), dev=Math.abs(ext-rest)/range;
+      if(!best||dev>best.dev)best={k,r:rest,e:ext,dev};
+    }
+    if(best&&best.dev>.2){rules[axis].push({k:best.k,r:best.r,e:best.e,s:sign});picked.push([name,best])}
+  });
+  MIDI.setup=null;
+  const ud=picked.filter(p=>p[0]==='up'||p[0]==='down'), lr=picked.filter(p=>p[0]==='left'||p[0]==='right');
+  const same=pair=>pair.length===2&&pair[0][1].k===pair[1][1].k&&Math.sign(pair[0][1].e-pair[0][1].r)===Math.sign(pair[1][1].e-pair[1][1].r);
+  const desc=([n,b])=>`${n} → ${b.k==='pb'?'pitch bend':'CC '+b.k.slice(2)} (${b.r}→${b.e})`;
+  let msg='Stick set up: '+picked.map(desc).join(', ')+'.';
+  if(same(ud)){rules.y=rules.y.slice(0,1);msg+=' Up and down send the same message, so the page can only use up. To get down working, the MPK has to send a different CC for down (DUAL CC in the Akai editor).'}
+  if(same(lr)){rules.x=rules.x.slice(0,1);msg+=' Left and right send the same message, so only left/right as one direction works.'}
+  if(picked.length<4)msg+=` It only heard ${picked.length} of 4 directions; run it again if one is missing.`;
+  if(rules.x.length)MIDI.stick.x=rules.x; if(rules.y.length)MIDI.stick.y=rules.y;
+  MIDI.axv={}; MIDI.x=0; MIDI.y=0; dirChanged();
+  saveMidiPrefs(); $('stickHint').textContent=msg; renderStickSetup();
+}
+function renderStickSetup(){
+  const b=$('bStick');
+  if(MIDI.setup){const st=SETUP_STEPS[MIDI.setup.step];b.textContent='Cancel';b.classList.add('on');$('stickHint').innerHTML=`<b>Step ${MIDI.setup.step+1} of 4:</b> push the MPK's stick all the way <b>${st[3]}</b>, hold a moment, then let go.`}
+  else{b.textContent='Set up stick';b.classList.remove('on')}
+}
 function onMIDI(e){
   const [st,d1=0,d2=0]=e.data, type=st&0xF0, ch=st&0x0F;
   if(st>=0xF0)return;
+  const pbv=type===0xE0?((d2<<7)|d1)-8192:null;
+  if(MIDI.setup&&(type===0xE0||(type===0xB0&&d1!==64))){stickSetupMsg(type===0xE0?'pb':'cc'+d1,type===0xE0?pbv:d2);return}
   if(type===0x90&&d2>0){const pi=padIndex(ch,d1);if(pi<0)MIDI.keyCh.add(ch);logMsg(`Note on · ch ${ch+1} · note ${d1} (${noteName(d1)}) · vel ${d2}${pi>=0?' → '+DRUMS[pi]+(MIDI.keyCh.has(ch)?' (pad, or a key on the same note)':''):''}`)}
-  else if(type===0xB0){const pk='cc'+ch+':'+d1, k=MIDI.cc.indexOf(d1);logMsg(`CC ${d1} · ch ${ch+1} · value ${d2}${pk in MIDI.padMap?' → pad: '+DRUMS[MIDI.padMap[pk]]:k>=0?' → K'+(k+1)+' '+KNOBS[k].n:d1===1||d1===2?' → stick':d1===64?' → record':' · not mapped'}`)}
-  else if(type===0xE0)logMsg(`Pitch bend · ch ${ch+1} · ${((d2<<7)|d1)-8192} → stick`);
+  else if(type===0xB0){const pk='cc'+ch+':'+d1, k=MIDI.cc.indexOf(d1);logMsg(`CC ${d1} · ch ${ch+1} · value ${d2}${pk in MIDI.padMap?' → pad: '+DRUMS[MIDI.padMap[pk]]:stickHas('cc'+d1)?' → stick':k>=0?' → K'+(k+1)+' '+KNOBS[k].n:d1===64?' → record':' · not mapped'}`)}
+  else if(type===0xE0)logMsg(`Pitch bend · ch ${ch+1} · ${pbv}${stickHas('pb')?' → stick':' · not mapped'}`);
   if(type===0x90&&d2>0)noteOn(d1,d2,ch);
   else if(type===0x80||type===0x90)noteOff(d1,ch);
-  else if(type===0xE0){MIDI.x=((d2<<7)|d1)-8192;MIDI.x/=8192;dirChanged()}
+  else if(type===0xE0){if(stickHas('pb'))stickIn('pb',pbv)}
   else if(type===0xB0){
     const pk='cc'+ch+':'+d1;
-    if(MIDI.padLearn!=null&&d2>0&&![1,2,64].includes(d1)){ensureAudio();assignPad(pk,velOf(d2));return}
+    if(MIDI.padLearn!=null&&d2>0&&!stickHas('cc'+d1)&&d1!==64){ensureAudio();assignPad(pk,velOf(d2));return}
     if(pk in MIDI.padMap){if(d2>0){ensureAudio();playDrum(MIDI.padMap[pk],velOf(d2))}return}
-    if(MIDI.learnCC!=null&&d1!==64){
+    if(MIDI.learnCC!=null&&d1!==64&&!stickHas('cc'+d1)){
       if(MIDI.learnAll&&MIDI.cc.slice(0,MIDI.learnCC).includes(d1))return; // still turning the previous knob
       const old=MIDI.cc.indexOf(d1);if(old>=0&&old!==MIDI.learnCC)MIDI.cc[old]=-1;
       MIDI.cc[MIDI.learnCC]=d1; delete MIDI.kst[d1];
@@ -1440,9 +1589,8 @@ function onMIDI(e){
       if(MIDI.learnCC==null)MIDI.learnAll=false;
       saveMidiPrefs(); renderKnobs(); return;
     }
+    if(stickHas('cc'+d1)){stickIn('cc'+d1,d2);return}
     const k=MIDI.cc.indexOf(d1); if(k>=0){knobIn(k,d1,d2);return}
-    if(d1===1){MIDI.y=d2/127;dirChanged();return}
-    if(d1===2){MIDI.y=-d2/127;dirChanged();return}
     if(d1===64){if(d2>=64)toggleRec();return}
     $('knobHint').textContent=`Your knobs may be sending CC ${d1}, which isn't mapped. Press "Learn all" and turn K1 through K8 in order.`;
   }
@@ -1459,6 +1607,8 @@ async function connectMidi(){
   catch(err){midiStatus('MIDI is blocked in this view. Open the downloaded copy of this page in Chrome or Edge.')}
 }
 $('bMidi').addEventListener('click',connectMidi);
+$('bStick').addEventListener('click',()=>{if(MIDI.setup){MIDI.setup=null;clearTimeout(MIDI.setupT);$('stickHint').textContent='Stick setup cancelled.';renderStickSetup()}else stickSetupStart()});
+$('bStickReset').addEventListener('click',()=>{MIDI.stick=JSON.parse(JSON.stringify(STICK0));MIDI.axv={};MIDI.x=0;MIDI.y=0;dirChanged();saveMidiPrefs();$('stickHint').textContent='Stick back to the factory mapping: pitch bend for left/right, CC 1 up, CC 2 down.'});
 function buildMidiKeys(){
   const host=$('midiKeys'); host.innerHTML='';
   host.appendChild(chips([['chords','Chords'],['split','Split'],['notes','Notes']],v=>v===MIDI.keys,v=>{MIDI.keys=v;MIDI.splitLearn=false;[...MIDI.held.keys()].forEach(letBtn);saveMidiPrefs()},buildMidiKeys));
@@ -1497,7 +1647,8 @@ function buildKnobType(){
 }
 
 /* ================= boot ================= */
-try{const m=JSON.parse(localStorage.getItem('hcp-midi')||'null');if(m){if(m.pads)MIDI.padMap=m.pads;if(Array.isArray(m.cc)&&m.cc.length===8)MIDI.cc=m.cc;if(m.kmode)MIDI.kmode=m.kmode;if(m.keys)MIDI.keys=m.keys;if(m.split)MIDI.split=m.split}}catch(e){}
+MIDI.stick=JSON.parse(JSON.stringify(STICK0));
+try{const m=JSON.parse(localStorage.getItem('hcp-midi')||'null');if(m){if(m.pads)MIDI.padMap=m.pads;if(Array.isArray(m.cc)&&m.cc.length===8)MIDI.cc=m.cc;if(m.kmode)MIDI.kmode=m.kmode;if(m.keys)MIDI.keys=m.keys;if(m.split)MIDI.split=m.split;if(m.stick&&m.stick.x&&m.stick.y)MIDI.stick=m.stick}}catch(e){}
 try{const p=JSON.parse(localStorage.getItem('hcp-session')||'null');if(p)loadProject(p)}catch(e){}
 buildMidiKeys(); buildKnobType(); renderPadLearn(); buildTransportOpts(); buildSongOpts(); drawSong(); buildTracks(); buildPanel(); renderKnobs(); render(); renderTracks(); renderTransport();
 addEventListener('resize',()=>renderTracks());
