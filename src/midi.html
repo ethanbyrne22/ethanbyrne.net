@@ -1198,7 +1198,7 @@ function buildKnobs(){
     dial.addEventListener('pointermove',e=>{if(e.pointerId!==pid)return;applyKnob(i,f0+(y0-e.clientY)/160)});
     dial.addEventListener('pointerup',()=>{pid=null});dial.addEventListener('pointercancel',()=>{pid=null});
     dial.addEventListener('keydown',e=>{if(e.key==='ArrowUp'||e.key==='ArrowRight'){e.preventDefault();e.stopPropagation();applyKnob(i,KNOBS[i].get()+.03)}if(e.key==='ArrowDown'||e.key==='ArrowLeft'){e.preventDefault();e.stopPropagation();applyKnob(i,KNOBS[i].get()-.03)}});
-    w.querySelector('.learn').addEventListener('click',()=>{MIDI.learnAll=false;MIDI.learnCC=MIDI.learnCC===i?null:i;renderKnobs()});
+    w.querySelector('.learn').addEventListener('click',()=>{cancelLearns('knobs');MIDI.learnAll=false;MIDI.learnCC=MIDI.learnCC===i?null:i;renderKnobs()});
     host.appendChild(w); knobEls[i]=w;
   });
 }
@@ -1625,8 +1625,11 @@ function onMIDI(e){
   else if(type===0xE0){if(stickHas('pb'))stickIn('pb',pbv)}
   else if(type===0xB0){
     const pk='cc'+ch+':'+d1;
-    if(MIDI.padLearn!=null&&d2>0&&!stickHas('cc'+d1)&&d1!==64){ensureAudio();assignPad(pk,velOf(d2));return}
-    if(MIDI.learnCC!=null&&d1!==64&&!stickHas('cc'+d1)){
+    if(MIDI.learnCC!=null&&d1!==64){
+      if(stickHas('cc'+d1)){
+        ['x','y'].forEach(a=>MIDI.stick[a]=MIDI.stick[a].filter(r=>r.k!=='cc'+d1));MIDI.axv={};MIDI.x=0;MIDI.y=0;
+        $('stickHint').textContent=`CC ${d1} now belongs to K${MIDI.learnCC+1}, so the stick stopped using it. If a stick direction stops working, press Set up stick (and don't touch the knobs while it runs).`;
+      }
       if(pk in MIDI.padMap){
         // the knob sends the same controller as a learned pad: hand the number to the knob and say why the pad stops
         $('knobHint').textContent=`K${MIDI.learnCC+1} sends CC ${d1}, which pad ${MIDI.padMap[pk]+1} also sends in CC mode, so that pad no longer plays. Press Bank A/B on the MPK so the pads use different numbers, then press Learn pads again.`;
@@ -1638,8 +1641,11 @@ function onMIDI(e){
       flash(`K${MIDI.learnCC+1} → CC${d1}`);
       MIDI.learnCC=MIDI.learnAll&&MIDI.learnCC<7?MIDI.learnCC+1:null;
       if(MIDI.learnCC==null)MIDI.learnAll=false;
-      saveMidiPrefs(); renderKnobs(); return;
+      saveMidiPrefs(); renderKnobs();
+      $('knobHint').textContent=MIDI.learnCC!=null?`Got it. Now turn K${MIDI.learnCC+1}.`:'Knobs learned.';
+      return;
     }
+    if(MIDI.padLearn!=null&&d2>0&&!stickHas('cc'+d1)&&d1!==64){ensureAudio();assignPad(pk,velOf(d2));return}
     if(pk in MIDI.padMap){ensureAudio();if(d2>0)drumDown(MIDI.padMap[pk],velOf(d2));else drumUp(MIDI.padMap[pk]);return}
     if(stickHas('cc'+d1)){stickIn('cc'+d1,d2);return}
     const k=MIDI.cc.indexOf(d1); if(k>=0){knobIn(k,d1,d2);return}
@@ -1659,7 +1665,7 @@ async function connectMidi(){
   catch(err){midiStatus('MIDI is blocked in this view. Open the downloaded copy of this page in Chrome or Edge.')}
 }
 $('bMidi').addEventListener('click',connectMidi);
-$('bStick').addEventListener('click',()=>{if(MIDI.setup){MIDI.setup=null;clearTimeout(MIDI.setupT);$('stickHint').textContent='Stick setup cancelled.';renderStickSetup()}else stickSetupStart()});
+$('bStick').addEventListener('click',()=>{cancelLearns('stick');if(MIDI.setup){MIDI.setup=null;clearTimeout(MIDI.setupT);$('stickHint').textContent='Stick setup cancelled.';renderStickSetup()}else stickSetupStart()});
 $('bStickReset').addEventListener('click',()=>{MIDI.stick=JSON.parse(JSON.stringify(STICK0));MIDI.axv={};MIDI.x=0;MIDI.y=0;dirChanged();saveMidiPrefs();$('stickHint').textContent='Stick back to the factory mapping: pitch bend for left/right, CC 1 up, CC 2 down.'});
 function buildMidiKeys(){
   const host=$('midiKeys'); host.innerHTML='';
@@ -1692,9 +1698,14 @@ function renderPadLearn(){
     ?`Pads learned as notes on channel ${clash[0][0]+1}, the same channel as the keys, so any key on ${clash.map(x=>noteName(x[1])).join(', ')} also plays a drum. Fix: turn on the MPK's Prog Change button and press Learn pads again.`
     :ccPads.length?'Pads learned in CC mode. They can\'t clash with the keys; if a knob ever plays a drum, switch to Prog Change mode and learn again.':'Pads learned.';
 }
-$('bPadLearn').addEventListener('click',()=>{ensureAudio();MIDI.padLearn=MIDI.padLearn==null?0:null;renderPadLearn()});
+function cancelLearns(except){
+  if(except!=='pads'&&MIDI.padLearn!=null){MIDI.padLearn=null;renderPadLearn()}
+  if(except!=='knobs'&&MIDI.learnCC!=null){MIDI.learnCC=null;MIDI.learnAll=false;renderKnobs()}
+  if(except!=='stick'&&MIDI.setup){MIDI.setup=null;clearTimeout(MIDI.setupT);renderStickSetup()}
+}
+$('bPadLearn').addEventListener('click',()=>{ensureAudio();cancelLearns('pads');MIDI.padLearn=MIDI.padLearn==null?0:null;renderPadLearn()});
 $('bPadReset').addEventListener('click',()=>{MIDI.padMap={};MIDI.padLearn=null;saveMidiPrefs();renderPadLearn()});
-$('bKnobAll').addEventListener('click',()=>{if(MIDI.learnAll){MIDI.learnAll=false;MIDI.learnCC=null}else{MIDI.learnAll=true;MIDI.learnCC=0}renderKnobs()});
+$('bKnobAll').addEventListener('click',()=>{cancelLearns('knobs');if(MIDI.learnAll){MIDI.learnAll=false;MIDI.learnCC=null;$('knobHint').textContent='Knob learning cancelled.'}else{MIDI.learnAll=true;MIDI.learnCC=0;$('knobHint').textContent=MIDI.access?'Turn K1 now. Leave the stick and pads alone until all eight are done.':'Press Connect MIDI first (in the MIDI section), then turn K1.'}renderKnobs()});
 function buildRoll(){const h=$('rollRate');h.innerHTML='';h.appendChild(chips(ROLLS.map(([l],i)=>[i,l]),v=>v===(S.roll||0),v=>{S.roll=v;rolls.clear()},buildRoll))}
 function buildKnobType(){
   const h=$('knobType');h.innerHTML='';
