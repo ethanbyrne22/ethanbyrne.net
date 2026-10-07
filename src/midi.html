@@ -1363,6 +1363,12 @@ function letBtn(src){
   if(!MIDI.held.has(src))return; const btn=MIDI.held.get(src); MIDI.held.delete(src);
   if(![...MIDI.held.values()].includes(btn))release(btn);
 }
+function assignPad(key,v){
+  for(const k in MIDI.padMap)if(MIDI.padMap[k]===MIDI.padLearn||k===key)delete MIDI.padMap[k];
+  MIDI.padMap[key]=MIDI.padLearn; playDrum(MIDI.padLearn,v);
+  MIDI.padLearn++; if(MIDI.padLearn>=8){MIDI.padLearn=null;saveMidiPrefs()}
+  renderPadLearn();
+}
 function padIndex(ch,n){
   const k=ch+':'+n;
   if(k in MIDI.padMap)return MIDI.padMap[k];
@@ -1371,12 +1377,7 @@ function padIndex(ch,n){
 }
 function noteOn(n,vel,ch){
   ensureAudio(); const v=velOf(vel);
-  if(MIDI.padLearn!=null){
-    for(const k in MIDI.padMap)if(MIDI.padMap[k]===MIDI.padLearn||k===ch+':'+n)delete MIDI.padMap[k];
-    MIDI.padMap[ch+':'+n]=MIDI.padLearn; playDrum(MIDI.padLearn,v);
-    MIDI.padLearn++; if(MIDI.padLearn>=8){MIDI.padLearn=null;saveMidiPrefs()}
-    renderPadLearn(); return;
-  }
+  if(MIDI.padLearn!=null){assignPad(ch+':'+n,v);return}
   if(MIDI.splitLearn){MIDI.split=n;MIDI.splitLearn=false;saveMidiPrefs();buildMidiKeys();flash('SPLIT '+noteName(n));return}
   const pi=padIndex(ch,n); if(pi>=0){playDrum(pi,v);return}
   const chordZone=MIDI.keys==='chords'||(MIDI.keys==='split'&&n<MIDI.split);
@@ -1421,12 +1422,15 @@ function onMIDI(e){
   const [st,d1=0,d2=0]=e.data, type=st&0xF0, ch=st&0x0F;
   if(st>=0xF0)return;
   if(type===0x90&&d2>0){const pi=padIndex(ch,d1);if(pi<0)MIDI.keyCh.add(ch);logMsg(`Note on · ch ${ch+1} · note ${d1} (${noteName(d1)}) · vel ${d2}${pi>=0?' → '+DRUMS[pi]+(MIDI.keyCh.has(ch)?' (pad, or a key on the same note)':''):''}`)}
-  else if(type===0xB0){const k=MIDI.cc.indexOf(d1);logMsg(`CC ${d1} · ch ${ch+1} · value ${d2}${k>=0?' → K'+(k+1)+' '+KNOBS[k].n:d1===1||d1===2?' → stick':d1===64?' → record':' · not mapped'}`)}
+  else if(type===0xB0){const pk='cc'+ch+':'+d1, k=MIDI.cc.indexOf(d1);logMsg(`CC ${d1} · ch ${ch+1} · value ${d2}${pk in MIDI.padMap?' → pad: '+DRUMS[MIDI.padMap[pk]]:k>=0?' → K'+(k+1)+' '+KNOBS[k].n:d1===1||d1===2?' → stick':d1===64?' → record':' · not mapped'}`)}
   else if(type===0xE0)logMsg(`Pitch bend · ch ${ch+1} · ${((d2<<7)|d1)-8192} → stick`);
   if(type===0x90&&d2>0)noteOn(d1,d2,ch);
   else if(type===0x80||type===0x90)noteOff(d1,ch);
   else if(type===0xE0){MIDI.x=((d2<<7)|d1)-8192;MIDI.x/=8192;dirChanged()}
   else if(type===0xB0){
+    const pk='cc'+ch+':'+d1;
+    if(MIDI.padLearn!=null&&d2>0&&![1,2,64].includes(d1)){ensureAudio();assignPad(pk,velOf(d2));return}
+    if(pk in MIDI.padMap){if(d2>0){ensureAudio();playDrum(MIDI.padMap[pk],velOf(d2))}return}
     if(MIDI.learnCC!=null&&d1!==64){
       if(MIDI.learnAll&&MIDI.cc.slice(0,MIDI.learnCC).includes(d1))return; // still turning the previous knob
       const old=MIDI.cc.indexOf(d1);if(old>=0&&old!==MIDI.learnCC)MIDI.cc[old]=-1;
@@ -1471,14 +1475,18 @@ function buildMidiKeys(){
 function renderPadLearn(){
   const b=$('bPadLearn'), s=$('padHint'), n=Object.keys(MIDI.padMap).length;
   dpads.forEach((p,i)=>p.style.outline=MIDI.padLearn===i?'3px solid var(--m-yellow)':'');
-  if(MIDI.padLearn!=null){b.textContent='Cancel';b.classList.add('on');s.textContent=`Hit pad ${MIDI.padLearn+1} of 8 on the MPK…`;return}
+  if(MIDI.padLearn!=null){b.textContent='Cancel';b.classList.add('on');s.textContent=`Hit pad ${MIDI.padLearn+1} of 8 on the MPK…`+(MIDI.padLearn===0?' (Tip: turn on the MPK\'s CC button first so pads can never clash with the keys.)':'');return}
   b.textContent='Learn pads';b.classList.remove('on');
   if(!n){s.textContent='Listening for pads on channel 10 (notes 36–51). If your pads do nothing, press Learn pads and hit pads 1 to 8.';return}
-  const keys=Object.keys(MIDI.padMap).map(k=>k.split(':').map(Number));
-  const clash=keys.filter(([c,nn])=>c!==9&&nn>=36&&nn<=84);
-  s.textContent=clash.length
-    ?`Pads learned. They share channel ${clash[0][0]+1} with the keys, so the keys ${clash.map(x=>noteName(x[1])).join(', ')} also play drums. To separate them, switch the pads to MIDI channel 10 in the MPK mini editor, or try Bank A/B and learn again.`
-    :'Pads learned.';
+  const all=Object.keys(MIDI.padMap), ccPads=all.filter(k=>k.startsWith('cc'));
+  const keys=all.filter(k=>!k.startsWith('cc')).map(k=>k.split(':').map(Number));
+  const clash=keys.filter(([c,nn])=>c!==9&&nn>=0&&nn<=127);
+  const knobClash=ccPads.map(k=>+k.split(':')[1]).filter(c=>MIDI.cc.includes(c));
+  s.textContent=knobClash.length
+    ?`Pads learned in CC mode, but CC ${knobClash.join(', ')} is also assigned to a knob, so that knob won't work. Run Learn all on the knobs again.`
+    :clash.length
+    ?`Pads learned as notes on channel ${clash[0][0]+1}, the same channel as the keys, so any key on ${clash.map(x=>noteName(x[1])).join(', ')} also plays a drum. Fix: turn on the MPK's CC button and press Learn pads again.`
+    :ccPads.length?'Pads learned in CC mode. They can never clash with the keys.':'Pads learned.';
 }
 $('bPadLearn').addEventListener('click',()=>{ensureAudio();MIDI.padLearn=MIDI.padLearn==null?0:null;renderPadLearn()});
 $('bPadReset').addEventListener('click',()=>{MIDI.padMap={};MIDI.padLearn=null;saveMidiPrefs();renderPadLearn()});
