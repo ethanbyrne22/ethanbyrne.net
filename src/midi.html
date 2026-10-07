@@ -355,6 +355,7 @@ kbd{background:var(--s1);border:1px solid var(--border);border-bottom-width:2px;
     <section class="card" aria-label="Drum pads">
       <div class="card-h"><h3><span class="no">03</span>808 pads</h3><span class="hint">Keys <kbd>Z</kbd>–<kbd>,</kbd></span></div>
       <div class="dpads" id="dpads"></div>
+      <div class="row"><span>Hold a pad to roll</span><div id="rollRate"></div></div>
       <div class="row"><span>Drum level · K8</span><div class="slider" id="drumLvl"></div></div>
       <div class="util"><button class="btn" id="bPadLearn">Learn pads</button><button class="btn" id="bPadReset">Reset to channel 10</button></div>
       <p class="hint" id="padHint"></p>
@@ -430,11 +431,12 @@ const SOUNDS=[['saw','Saw','TOUCH'],['sine','Sine','TOUCH'],['triangle','Triangl
 const MODES=[['play','Play'],['strum','Strum'],['lead','Lead'],['drone','Drone'],['arp','Arp'],['repeat','Repeat']];
 const RATES=[['1/1',4],['1/2',2],['1/4',1],['1/8',.5],['1/16',.25],['1/16T',1/6],['1/32',.125],['Swing 8',[2/3,1/3]],['Swing 16',[1/3,1/6]]];
 const DELAYS=[['1/4',1],['1/8',.5],['1/16',.25],['1/16T',1/6],['Dotted 1/8',.75]];
-const PATTERNS=[['up','Up'],['down','Down'],['updown','Up/Down'],['downup','Down/Up'],['random','Random'],['finger','Fingerpick']];
+const PATTERNS=[['up','Up'],['down','Down'],['updown','Up/Down'],['downup','Down/Up'],['random','Random'],['finger','Fingerpick'],['two5','Root ↔ 5th'],['two8','Root ↔ octave']];
 const PROGS=[['1 5 6 4','Pop axis'],['1 6 4 5','Doo-wop'],['6 4 1 5','Emotional'],['2 5 1 1','Jazz ii–V–I'],['1 4 6 5','Anthemic'],['1 4 1 5','Blues and rock']];
 const DRUMS=['Kick','Snare','Closed hat','Open hat','Clap','Low tom','Rim','Cowbell'];
 const DRUM_KEYS=['z','x','c','v','b','n','m',','];
 const GM=[36,38,42,46,39,45,37,56];
+const ROLLS=[['Off',0],['1/4',1],['1/8',.5],['1/16',.25],['1/16T',1/6],['1/32',.125]];
 const QUANTS=[['Off',0],['1/8',.5],['1/16',.25],['1/16T',1/6]];
 
 const S={key:0,scale:'Major',octave:0,jmode:'default',bass:false,vlead:false,
@@ -508,7 +510,7 @@ function voiced(ch){
   }
   S.prev=n;
   let bass=null; if(S.bass){bass=ch.root-24;while(bass<28)bass+=12}
-  return {notes:n,bass};
+  return {notes:n,bass,root:ch.root};
 }
 
 /* ================= audio ================= */
@@ -626,6 +628,31 @@ function drumHit(c,dest,i,t,vel){
       [540,800].forEach(f=>{const o=c.createOscillator();o.type='square';o.frequency.value=f;o.connect(bp);run(o,t+.45)});bp.connect(g);g.connect(out);break}
   }
 }
+const rolls=new Map();
+/* hold a pad to roll it; while a pad is held (and no chord), the stick picks the rate like the HiChord's auto-drum */
+const DIR_ROLL={N:[1,'1/4'],E:[.5,'1/8'],S:[.25,'1/16'],W:[.125,'1/32'],NE:[[2/3,1/3],'swing 8'],SE:[[1/3,1/6],'swing 16'],SW:[1/6,'1/16T'],NW:[[2/3,1/3],'swing 8']};
+function rollStep(){const d=curDir();if(d&&rolls.size&&!S.held.length)return DIR_ROLL[d][0];return ROLLS[S.roll||0][1]}
+function drumDown(i,vel=1,latch=false){
+  if(latch&&rolls.has(i)){rolls.delete(i);return}        // program-change pads can't send a release: second tap stops the roll
+  playDrum(i,vel);
+  if(!ctx||(latch&&!ROLLS[S.roll||0][1]))return;
+  rolls.set(i,{vel,next:null,k:0,latch});
+}
+function drumUp(i){const r=rolls.get(i);if(r&&!r.latch)rolls.delete(i)}
+function tickRolls(){
+  if(!ctx||!rolls.size)return;
+  const st=rollStep(); if(!st){rolls.forEach(r=>r.next=null);return}
+  const spb=60/S.bpm, now=ctx.currentTime, len=k=>Array.isArray(st)?st[k%2]:st, cyc=Array.isArray(st)?st[0]+st[1]:st;
+  rolls.forEach((r,i)=>{
+    if(r.next==null){r.k=0;r.next=T.playing?timeAt(Math.ceil((beatAt(now)+.02)/cyc)*cyc):now+len(0)*spb}
+    while(r.next<now+.1){
+      const t=Math.max(r.next,now), v=r.vel*(r.k%2?.82:1);
+      drumHit(ctx,drumBus,i,t,v); logDrum(i,t,v,true);
+      const el=dpads[i]; setTimeout(()=>{el.classList.add('hit');setTimeout(()=>el.classList.remove('hit'),60)},Math.max(0,(t-now)*1000));
+      r.next+=len(r.k)*spb; r.k++;
+    }
+  });
+}
 function playDrum(i,vel=1){
   ensureAudio(); const t=ctx.currentTime;
   drumHit(ctx,drumBus,i,t,vel); logDrum(i,t,vel);
@@ -678,7 +705,7 @@ function refreshHeld(){
 }
 function panic(){
   if(ctx){const t=ctx.currentTime;Object.values(S.voices).forEach(a=>releaseAll(a,t,true));if(S.lead)S.lead.release(t,true);MIDI.notes.forEach(v=>v.release(t,true))}
-  S.voices={};S.lead=null;MIDI.notes.clear();MIDI.held.clear();stopDrone();stopSeq();stopProg();
+  S.voices={};S.lead=null;MIDI.notes.clear();MIDI.held.clear();rolls.clear();stopDrone();stopSeq();stopProg();
   S.held.forEach(i=>pads[i].classList.remove('down'));S.held=[];render();
 }
 
@@ -709,7 +736,15 @@ function tickSeq(){
     const b=stepBeats(S.step), d=b*spb, t=Math.max(S.nextT,ctx.currentTime);
     if(S.mode==='arp'){
       let ns=[...S.seq.notes]; if(S.arpOct===2)ns=ns.concat(ns.map(x=>x+12));
-      makeVoice(ns[arpIndex(S.step,ns.length)],t,{peak:.2*S.vel,pan:S.stereo?(Math.random()-.5)*.5:0,gen:true}).release(t+d*.8);
+      if(S.pattern==='two5'||S.pattern==='two8'){
+        // bounce between the chord's root and its fifth (or the root an octave up)
+        const lo=Math.min(...S.seq.notes), rt=S.seq.root??lo;
+        let r=lo; for(const x of S.seq.notes)if((((x-rt)%12)+12)%12===0){r=x;break}
+        const fifth=S.seq.notes.find(x=>x>r&&[6,7,8].includes((x-r)%12));
+        const hi=S.pattern==='two8'?r+12:(fifth??r+7);
+        ns=[r,S.arpOct===2?hi+12:hi];
+      }
+      makeVoice(ns[S.pattern.startsWith('two')?S.step%2:arpIndex(S.step,ns.length)],t,{peak:.2*S.vel,pan:S.stereo?(Math.random()-.5)*.5:0,gen:true}).release(t+d*.8);
       if(S.arpLayer==='rhythm'&&Math.abs(S.beat-Math.round(S.beat))<1e-6)releaseAll(startChord(S.seq,t,0,.5,true),t+spb*.35);
     }else releaseAll(startChord(S.seq,t,0,1,true),t+d*.5);
     S.nextT+=d; S.step++; S.beat+=b;
@@ -799,10 +834,10 @@ function logVoice(m,t,o,env,h){
     h.release(tr,fast);
   }};
 }
-function logDrum(i,t,v){
+function logDrum(i,t,v,gen){
   const R=T.rec; if(!R||!T.playing)return;
   const b=beatAt(t)-R.start; if(b<-.25||b>=R.L)return;
-  R.events.push({k:'d',b:Math.max(0,b),i,v});
+  const ev={k:'d',b:Math.max(0,b),i,v}; if(gen)ev.x=1; R.events.push(ev);
 }
 function logAuto(){
   const R=T.rec; if(!R||!T.playing||!ctx)return;
@@ -904,7 +939,7 @@ function tickTransport(){
   }
   if(T.pv.length>200)T.pv=T.pv.filter(x=>x.end>now);
 }
-setInterval(()=>{tickTransport();tickSeq()},25);
+setInterval(()=>{tickTransport();tickSeq();tickRolls()},25);
 
 /* ================= export ================= */
 const exportBeats=()=>T.mode==='song'?songEnd():T.loops*loopBeats();
@@ -1030,7 +1065,8 @@ const curDir=()=>S.ptrDir||midiDir()||keyDir();
 function dirChanged(){
   const d=curDir(); if(d===S.lastDir)return; S.lastDir=d;
   if(S.ptrId==null)placeKnob(d);
-  if(S.jmode==='chromatic'&&!S.held.length&&(d==='E'||d==='W')){S.key=(S.key+(d==='E'?1:11))%12;flash('KEY '+NOTE[S.key])}
+  if(d&&rolls.size&&!S.held.length)flash('ROLL '+DIR_ROLL[d][1]);
+  if(S.jmode==='chromatic'&&!S.held.length&&!rolls.size&&(d==='E'||d==='W')){S.key=(S.key+(d==='E'?1:11))%12;flash('KEY '+NOTE[S.key])}
   refreshHeld(); render();
 }
 const stick=document.getElementById('stick'), knobEl=document.getElementById('knob');
@@ -1187,7 +1223,8 @@ const dpads=[];
 for(let i=0;i<8;i++){
   const b=document.createElement('button');b.className='dpad';
   b.innerHTML=`<small>PAD ${i+1} · ${DRUM_KEYS[i].toUpperCase()}</small><b>${DRUMS[i]}</b>`;
-  b.addEventListener('pointerdown',e=>{e.preventDefault();playDrum(i,1)});
+  b.addEventListener('pointerdown',e=>{e.preventDefault();ensureAudio();b.setPointerCapture(e.pointerId);drumDown(i,1)});
+  b.addEventListener('pointerup',()=>drumUp(i));b.addEventListener('pointercancel',()=>drumUp(i));
   dpads[i]=b;
 }
 [4,5,6,7,0,1,2,3].forEach(i=>$('dpads').appendChild(dpads[i]));
@@ -1374,7 +1411,7 @@ addEventListener('keydown',e=>{
   if(e.key.startsWith('Arrow')){if(document.activeElement&&document.activeElement.classList.contains('dial'))return;e.preventDefault();if(document.activeElement&&document.activeElement.type==='range')document.activeElement.blur();S.arrows.add(e.key);dirChanged();return}
   if(e.repeat)return;
   const k=e.key.toLowerCase(), di=DRUM_KEYS.indexOf(k);
-  if(di>=0){playDrum(di,1);return}
+  if(di>=0){ensureAudio();drumDown(di,1);return}
   if(k==='i')$('bInv').click();
   else if(k==='l')toggleLock();
   else if(k==='t')tapTempo();
@@ -1384,6 +1421,7 @@ addEventListener('keydown',e=>{
 });
 addEventListener('keyup',e=>{
   if(e.key>='1'&&e.key<='7')release(+e.key-1);
+  {const di=DRUM_KEYS.indexOf(e.key.toLowerCase());if(di>=0)drumUp(di)}
   if(e.key.startsWith('Arrow')){S.arrows.delete(e.key);dirChanged()}
 });
 addEventListener('blur',()=>{S.arrows.clear();dirChanged();[...S.held].forEach(release)});
@@ -1472,12 +1510,13 @@ function noteOn(n,vel,ch){
   ensureAudio(); const v=velOf(vel);
   if(MIDI.padLearn!=null){assignPad(ch+':'+n,v);return}
   if(MIDI.splitLearn){MIDI.split=n;MIDI.splitLearn=false;saveMidiPrefs();buildMidiKeys();flash('SPLIT '+noteName(n));return}
-  const pi=padIndex(ch,n); if(pi>=0){playDrum(pi,v);return}
+  const pi=padIndex(ch,n); if(pi>=0){drumDown(pi,v);return}
   const chordZone=MIDI.keys==='chords'||(MIDI.keys==='split'&&n<MIDI.split);
   if(chordZone){
-    const deg=SCALES[S.scale].indexOf(((n-S.key)%12+12)%12);
+    // white keys C D E F G A B are always buttons 1–7, in any key; black keys do nothing here
+    const deg={0:0,2:1,4:2,5:3,7:4,9:5,11:6}[n%12];
     const base=MIDI.keys==='split'?MIDI.split-12:48;
-    if(deg>=0)holdBtn(deg,'k'+n,v,Math.floor((n-base)/12)); else flash('NOT IN KEY');
+    if(deg!=null)holdBtn(deg,'k'+n,v,Math.floor((n-base)/12));
     return;
   }
   if(MIDI.notes.has(n))MIDI.notes.get(n).release(ctx.currentTime,true);
@@ -1486,7 +1525,7 @@ function noteOn(n,vel,ch){
   S.vel=prevVel; render();
 }
 function noteOff(n,ch){
-  if(padIndex(ch,n)>=0)return;
+  {const pi=padIndex(ch,n);if(pi>=0){drumUp(pi);return}}
   letBtn('k'+n);
   if(MIDI.notes.has(n)){MIDI.notes.get(n).release(ctx?ctx.currentTime:0);MIDI.notes.delete(n);render()}
 }
@@ -1573,14 +1612,26 @@ function onMIDI(e){
   if(type===0x90&&d2>0){const pi=padIndex(ch,d1);if(pi<0)MIDI.keyCh.add(ch);logMsg(`Note on · ch ${ch+1} · note ${d1} (${noteName(d1)}) · vel ${d2}${pi>=0?' → '+DRUMS[pi]+(MIDI.keyCh.has(ch)?' (pad, or a key on the same note)':''):''}`)}
   else if(type===0xB0){const pk='cc'+ch+':'+d1, k=MIDI.cc.indexOf(d1);logMsg(`CC ${d1} · ch ${ch+1} · value ${d2}${pk in MIDI.padMap?' → pad: '+DRUMS[MIDI.padMap[pk]]:stickHas('cc'+d1)?' → stick':k>=0?' → K'+(k+1)+' '+KNOBS[k].n:d1===64?' → record':' · not mapped'}`)}
   else if(type===0xE0)logMsg(`Pitch bend · ch ${ch+1} · ${pbv}${stickHas('pb')?' → stick':' · not mapped'}`);
+  if(type===0xC0){
+    const pk='pc'+ch+':'+d1;
+    logMsg(`Program change · ch ${ch+1} · ${d1}${pk in MIDI.padMap?' → pad: '+DRUMS[MIDI.padMap[pk]]:MIDI.padLearn!=null?'':' · not mapped'}`);
+    ensureAudio();
+    if(MIDI.padLearn!=null){assignPad(pk,.85);return}
+    if(pk in MIDI.padMap)drumDown(MIDI.padMap[pk],.85,true);
+    return;
+  }
   if(type===0x90&&d2>0)noteOn(d1,d2,ch);
   else if(type===0x80||type===0x90)noteOff(d1,ch);
   else if(type===0xE0){if(stickHas('pb'))stickIn('pb',pbv)}
   else if(type===0xB0){
     const pk='cc'+ch+':'+d1;
     if(MIDI.padLearn!=null&&d2>0&&!stickHas('cc'+d1)&&d1!==64){ensureAudio();assignPad(pk,velOf(d2));return}
-    if(pk in MIDI.padMap){if(d2>0){ensureAudio();playDrum(MIDI.padMap[pk],velOf(d2))}return}
     if(MIDI.learnCC!=null&&d1!==64&&!stickHas('cc'+d1)){
+      if(pk in MIDI.padMap){
+        // the knob sends the same controller as a learned pad: hand the number to the knob and say why the pad stops
+        $('knobHint').textContent=`K${MIDI.learnCC+1} sends CC ${d1}, which pad ${MIDI.padMap[pk]+1} also sends in CC mode, so that pad no longer plays. Press Bank A/B on the MPK so the pads use different numbers, then press Learn pads again.`;
+        delete MIDI.padMap[pk]; renderPadLearn();
+      }
       if(MIDI.learnAll&&MIDI.cc.slice(0,MIDI.learnCC).includes(d1))return; // still turning the previous knob
       const old=MIDI.cc.indexOf(d1);if(old>=0&&old!==MIDI.learnCC)MIDI.cc[old]=-1;
       MIDI.cc[MIDI.learnCC]=d1; delete MIDI.kst[d1];
@@ -1589,6 +1640,7 @@ function onMIDI(e){
       if(MIDI.learnCC==null)MIDI.learnAll=false;
       saveMidiPrefs(); renderKnobs(); return;
     }
+    if(pk in MIDI.padMap){ensureAudio();if(d2>0)drumDown(MIDI.padMap[pk],velOf(d2));else drumUp(MIDI.padMap[pk]);return}
     if(stickHas('cc'+d1)){stickIn('cc'+d1,d2);return}
     const k=MIDI.cc.indexOf(d1); if(k>=0){knobIn(k,d1,d2);return}
     if(d1===64){if(d2>=64)toggleRec();return}
@@ -1618,29 +1670,32 @@ function buildMidiKeys(){
     b.addEventListener('click',()=>{MIDI.splitLearn=!MIDI.splitLearn;buildMidiKeys()});host.appendChild(b);
   }
   $('midiKeysHint').textContent={
-    chords:"Every key in the current scale plays its chord button, voiced in the octave you play it. The MPK's Octave −/+ buttons move the chords down and up, and the screen shows OCT ±n.",
+    chords:"White keys C D E F G A B always play buttons 1–7, whatever key you're in, voiced in the octave you play them. Black keys are silent. The MPK's Octave −/+ buttons move the chords down and up, and the screen shows OCT ±n.",
     split:`Keys below ${noteName(MIDI.split)} play chords, keys from ${noteName(MIDI.split)} up play single notes. The Octave buttons shift the whole keyboard, so they also move where the split falls under your hands.`,
     notes:'Keys play single notes with the current sound. The Octave buttons transpose as usual.'}[MIDI.keys];
 }
 function renderPadLearn(){
   const b=$('bPadLearn'), s=$('padHint'), n=Object.keys(MIDI.padMap).length;
   dpads.forEach((p,i)=>p.style.outline=MIDI.padLearn===i?'3px solid var(--m-yellow)':'');
-  if(MIDI.padLearn!=null){b.textContent='Cancel';b.classList.add('on');s.textContent=`Hit pad ${MIDI.padLearn+1} of 8 on the MPK…`+(MIDI.padLearn===0?' (Tip: turn on the MPK\'s CC button first so pads can never clash with the keys.)':'');return}
+  if(MIDI.padLearn!=null){b.textContent='Cancel';b.classList.add('on');s.textContent=`Hit pad ${MIDI.padLearn+1} of 8 on the MPK…`+(MIDI.padLearn===0?' (Tip: turn on the MPK\'s Prog Change button first, so the pads can never clash with keys or knobs.)':'');return}
   b.textContent='Learn pads';b.classList.remove('on');
   if(!n){s.textContent='Listening for pads on channel 10 (notes 36–51). If your pads do nothing, press Learn pads and hit pads 1 to 8.';return}
-  const all=Object.keys(MIDI.padMap), ccPads=all.filter(k=>k.startsWith('cc'));
-  const keys=all.filter(k=>!k.startsWith('cc')).map(k=>k.split(':').map(Number));
+  const all=Object.keys(MIDI.padMap), ccPads=all.filter(k=>k.startsWith('cc')), pcPads=all.filter(k=>k.startsWith('pc'));
+  const keys=all.filter(k=>!k.startsWith('cc')&&!k.startsWith('pc')).map(k=>k.split(':').map(Number));
   const clash=keys.filter(([c,nn])=>c!==9&&nn>=0&&nn<=127);
   const knobClash=ccPads.map(k=>+k.split(':')[1]).filter(c=>MIDI.cc.includes(c));
-  s.textContent=knobClash.length
+  s.textContent=pcPads.length===all.length
+    ?'Pads learned in Prog Change mode. They can never clash with keys or knobs. This mode has no "let go", so with a roll rate set, tap a pad once to start its roll and again to stop it.'
+    :knobClash.length
     ?`Pads learned in CC mode, but CC ${knobClash.join(', ')} is also assigned to a knob, so that knob won't work. Run Learn all on the knobs again.`
     :clash.length
-    ?`Pads learned as notes on channel ${clash[0][0]+1}, the same channel as the keys, so any key on ${clash.map(x=>noteName(x[1])).join(', ')} also plays a drum. Fix: turn on the MPK's CC button and press Learn pads again.`
-    :ccPads.length?'Pads learned in CC mode. They can never clash with the keys.':'Pads learned.';
+    ?`Pads learned as notes on channel ${clash[0][0]+1}, the same channel as the keys, so any key on ${clash.map(x=>noteName(x[1])).join(', ')} also plays a drum. Fix: turn on the MPK's Prog Change button and press Learn pads again.`
+    :ccPads.length?'Pads learned in CC mode. They can\'t clash with the keys; if a knob ever plays a drum, switch to Prog Change mode and learn again.':'Pads learned.';
 }
 $('bPadLearn').addEventListener('click',()=>{ensureAudio();MIDI.padLearn=MIDI.padLearn==null?0:null;renderPadLearn()});
 $('bPadReset').addEventListener('click',()=>{MIDI.padMap={};MIDI.padLearn=null;saveMidiPrefs();renderPadLearn()});
 $('bKnobAll').addEventListener('click',()=>{if(MIDI.learnAll){MIDI.learnAll=false;MIDI.learnCC=null}else{MIDI.learnAll=true;MIDI.learnCC=0}renderKnobs()});
+function buildRoll(){const h=$('rollRate');h.innerHTML='';h.appendChild(chips(ROLLS.map(([l],i)=>[i,l]),v=>v===(S.roll||0),v=>{S.roll=v;rolls.clear()},buildRoll))}
 function buildKnobType(){
   const h=$('knobType');h.innerHTML='';
   h.appendChild(chips([['auto','Auto'],['abs','Absolute'],['rel','Relative']],v=>v===MIDI.kmode,v=>{MIDI.kmode=v;MIDI.kst={};saveMidiPrefs();renderKnobs()},buildKnobType));
@@ -1650,7 +1705,7 @@ function buildKnobType(){
 MIDI.stick=JSON.parse(JSON.stringify(STICK0));
 try{const m=JSON.parse(localStorage.getItem('hcp-midi')||'null');if(m){if(m.pads)MIDI.padMap=m.pads;if(Array.isArray(m.cc)&&m.cc.length===8)MIDI.cc=m.cc;if(m.kmode)MIDI.kmode=m.kmode;if(m.keys)MIDI.keys=m.keys;if(m.split)MIDI.split=m.split;if(m.stick&&m.stick.x&&m.stick.y)MIDI.stick=m.stick}}catch(e){}
 try{const p=JSON.parse(localStorage.getItem('hcp-session')||'null');if(p)loadProject(p)}catch(e){}
-buildMidiKeys(); buildKnobType(); renderPadLearn(); buildTransportOpts(); buildSongOpts(); drawSong(); buildTracks(); buildPanel(); renderKnobs(); render(); renderTracks(); renderTransport();
+buildMidiKeys(); buildKnobType(); buildRoll(); renderPadLearn(); buildTransportOpts(); buildSongOpts(); drawSong(); buildTracks(); buildPanel(); renderKnobs(); render(); renderTracks(); renderTransport();
 addEventListener('resize',()=>renderTracks());
 if(navigator.permissions&&navigator.requestMIDIAccess){navigator.permissions.query({name:'midi'}).then(p=>{if(p.state==='granted')navigator.requestMIDIAccess().then(a=>{MIDI.access=a;a.onstatechange=bindMidi;bindMidi()}).catch(()=>{})}).catch(()=>{})}
 })();
