@@ -165,7 +165,7 @@ button:focus-visible,input:focus-visible,.dial:focus-visible{outline:2px solid v
 .mon div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pcap{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);gap:12px;flex-wrap:wrap}
 .pscroll{overflow-x:auto}
-.piano{position:relative;height:96px;min-width:640px;display:flex}
+.piano{position:relative;height:96px;min-width:760px;display:flex}
 .wk{flex:1;border:1px solid var(--line);border-left:0;background:var(--key-w);border-radius:0 0 5px 5px;position:relative}
 .wk:first-child{border-left:1px solid var(--line)}
 .wk small{position:absolute;bottom:4px;left:0;right:0;text-align:center;font:500 9px var(--f-mono);color:#7d868e}
@@ -469,7 +469,7 @@ const ROLLS=[['Off',0],['1/4',1],['1/8',.5],['1/16',.25],['1/16T',1/6],['1/32',.
 const QUANTS=[['Off',0],['1/8',.5],['1/16',.25],['1/16T',1/6]];
 
 const S={key:0,scale:'Major',octave:0,jmode:'default',bass:false,vlead:false,
-  sound:'saw',bassTone:380,bassBite:.45,bassSub:.6,glideMs:90,mono:false,env:[...ENVS.TOUCH],envName:'TOUCH',cutoff:12000,res:.7,revMix:.3,dMix:0,delay:1,stereo:true,glide:false,drumVol:.9,
+  sound:'saw',bassTone:380,bassBite:.45,bassSub:.6,bassWeight:.5,bassSubOct:1,noteOct:0,glideMs:90,mono:false,env:[...ENVS.TOUCH],envName:'TOUCH',cutoff:12000,res:.7,revMix:.3,dMix:0,delay:1,stereo:true,glide:false,drumVol:.9,
   mode:'play',bpm:110,strum:80,pattern:'up',arpOct:1,arpLayer:'only',rate:3,
   inv:Array(12).fill(0),locks:Array(12).fill(null),btnOct:Array(12).fill(0),set:null,setTrans:0,setText:'',setName:'',
   held:[],last:0,voices:{},display:'C',flash:null,vel:1,
@@ -642,12 +642,14 @@ function makeVoice(midi,t,o={}){
     case 'pad':{const lp=c.createBiquadFilter();lp.frequency.value=1700;const m=gain(.32);[-12,0,11].forEach(d=>osc('sawtooth',1,d).connect(m));m.connect(lp);lp.connect(g);break}
     case 'bass':{
       // two detuned oscillators through a resonant low-pass with its own envelope ("bite"), plus a clean sine sub an octave down
-      const p=o.sp||{tone:S.bassTone,bite:S.bassBite,sub:S.bassSub};
+      const p=o.sp||{tone:S.bassTone,bite:S.bassBite,sub:S.bassSub,weight:S.bassWeight,subOct:S.bassSubOct};
       const lp=c.createBiquadFilter();lp.type='lowpass';lp.Q.value=4.5;
       if(o.legato)lp.frequency.setValueAtTime(p.tone,t);
       else{lp.frequency.setValueAtTime(Math.min(p.tone*(1+p.bite*10),12000),t);lp.frequency.setTargetAtTime(p.tone,t,.09)}
-      const m=gain(.42);osc('sawtooth',1,-4).connect(m);osc('square',1,5).connect(m);m.connect(lp);lp.connect(g);
-      const sg=gain(p.sub*.9);osc('sine',.5).connect(sg);sg.connect(g);
+      // "weight" is a low-shelf boost under ~110 Hz; the sub can sit one or two octaves down
+      const ls=c.createBiquadFilter();ls.type='lowshelf';ls.frequency.value=110;ls.gain.value=(p.weight??.5)*12;ls.connect(g);
+      const m=gain(.42);osc('sawtooth',1,-4).connect(m);osc('square',1,5).connect(m);m.connect(lp);lp.connect(ls);
+      const sg=gain(p.sub*1.1);osc('sine',p.subOct===2?.25:.5).connect(sg);sg.connect(ls);
       o.sp=p;break}
     case 'pluck':{const lp=c.createBiquadFilter();lp.Q.value=2;lp.frequency.setValueAtTime(5200,t);lp.frequency.setTargetAtTime(380,t,.11);const m=gain(.6);osc('sawtooth').connect(m);m.connect(lp);lp.connect(g);break}
     case 'epiano':{const cr=osc('sine'),md=osc('sine',1),mg=c.createGain();mg.gain.setValueAtTime(f*2.2,t);mg.gain.setTargetAtTime(f*.25,t,.35);md.connect(mg);mg.connect(cr.frequency);const m=gain(.9);cr.connect(m);m.connect(g);break}
@@ -773,7 +775,7 @@ function release(i){
   render();
 }
 function playLead(ch){
-  const t=ctx.currentTime, m=ch.root+12, from=S.glide&&S.lead?S.leadMidi:null;
+  const t=ctx.currentTime, m=ch.root+12+12*S.noteOct, from=S.glide&&S.lead?S.leadMidi:null;
   if(S.lead)S.lead.release(t,S.glide);
   S.lead=makeVoice(m,t,{peak:.24*S.vel,from,glide:Math.max(.005,S.glideMs/1000),legato:from!=null}); S.leadMidi=m; S.display=ch.name;
 }
@@ -1142,7 +1144,7 @@ function loadProject(p){
 function persist(){try{localStorage.setItem('hcp-session',JSON.stringify(projectData()))}catch(e){}}
 
 /* ================= stick ================= */
-const MIDI={access:null,x:0,y:0,held:new Map(),notes:new Map(),keys:'chords',split:60,splitLearn:false,raf:0,learnCC:null,learnAll:false,cc:[70,71,72,73,74,75,76,77],kmode:'auto',kst:{},padMap:{},padLearn:null,keyCh:new Set(),mono:null,monoStack:[],axv:{},setup:null,stick:null};
+const MIDI={access:null,x:0,y:0,held:new Map(),notes:new Map(),keys:'chords',split:60,splitLearn:false,raf:0,learnCC:null,learnAll:false,cc:[70,71,72,73,74,75,76,77],kmode:'auto',kst:{},padMap:{},padLearn:null,keyCh:new Set(),np:new Map(),mono:null,monoStack:[],axv:{},setup:null,stick:null};
 function midiDir(){const {x,y}=MIDI;if(Math.hypot(x,y)<.35)return null;return DIRS[((Math.round(Math.atan2(y,x)/(Math.PI/4))%8)+8)%8]}
 function keyDir(){
   const a=S.arrows, dx=(a.has('ArrowRight')?1:0)-(a.has('ArrowLeft')?1:0), dy=(a.has('ArrowUp')?1:0)-(a.has('ArrowDown')?1:0);
@@ -1228,7 +1230,7 @@ function buildPanel(){
   }
   if(S.tab==='sound'){
     panel.append(
-      row('Instrument',chips(SOUNDS.map(s=>[s[0],s[1]]),v=>v===S.sound,v=>{S.sound=v;const e=SOUNDS.find(s=>s[0]===v)[2];S.envName=e;S.env=[...ENVS[e]];if(v==='bass')S.mono=true;renderKnobs()})),
+      row('Instrument',chips(SOUNDS.map(s=>[s[0],s[1]]),v=>v===S.sound,v=>{S.sound=v;const e=SOUNDS.find(s=>s[0]===v)[2];S.envName=e;S.env=[...ENVS[e]];if(v==='bass'){S.mono=true;if(S.noteOct>-1)S.noteOct=-2}renderKnobs()})),
       row('Envelope',chips(Object.keys(ENVS).map(k=>[k,k[0]+k.slice(1).toLowerCase()]),v=>v===S.envName,v=>{S.envName=v;S.env=[...ENVS[v]];renderKnobs()})),
       row('Attack · K3',slider('att',1,2000,1,S.env[0],v=>v+' ms',v=>{S.env[0]=v;S.envName=null;renderKnobs()})),
       row('Release · K4',slider('rel',10,5000,10,S.env[3],v=>v+' ms',v=>{S.env[3]=v;S.envName=null;renderKnobs()})),
@@ -1240,13 +1242,16 @@ function buildPanel(){
       row('Stereo spread',chips([[false,'Off'],[true,'On']],v=>v===S.stereo,v=>{S.stereo=v})),
       row('Glide (Lead mode)',chips([[false,'Off'],[true,'On']],v=>v===S.glide,v=>{S.glide=v})),
       row('MPK keys in Notes mode',chips([[false,'Poly'],[true,'Mono legato']],v=>v===S.mono,v=>{S.mono=v;MIDI.mono=null;MIDI.monoStack=[]})),
+      row('Notes & Lead octave',chips([[-3,'−3'],[-2,'−2'],[-1,'−1'],[0,'0'],[1,'+1']],v=>v===S.noteOct,v=>{S.noteOct=v;MIDI.mono=null;MIDI.monoStack=[]})),
       row('Glide time',slider('glt',0,400,5,S.glideMs,v=>v?v+' ms':'Off',v=>{S.glideMs=v})));
     if(S.sound==='bass')panel.insertBefore(Object.assign(document.createElement('div'),{className:'setbox'}),panel.children[2]),
       panel.children[2].append(
         row('Bass tone',slider('btone',0,1,.001,Math.log(S.bassTone/60)/Math.log(50),v=>Math.round(60*Math.pow(50,v))+' Hz',v=>{S.bassTone=60*Math.pow(50,v)})),
         row('Bite (filter envelope)',slider('bbite',0,1,.01,S.bassBite,v=>Math.round(v*100)+'%',v=>{S.bassBite=v})),
-        row('Sub octave',slider('bsub',0,1,.01,S.bassSub,v=>Math.round(v*100)+'%',v=>{S.bassSub=v})),
-        Object.assign(document.createElement('p'),{className:'hint',textContent:'For a rolling bass: MPK keys in Notes mode (section 06), Mono legato on, glide around 60–150 ms, then play the next key before letting go of the last.'}));
+        row('Sub level',slider('bsub',0,1,.01,S.bassSub,v=>Math.round(v*100)+'%',v=>{S.bassSub=v})),
+        row('Sub depth',chips([[1,'1 octave down'],[2,'2 octaves down']],v=>v===S.bassSubOct,v=>{S.bassSubOct=v})),
+        row('Weight (low boost)',slider('bweight',0,1,.01,S.bassWeight,v=>'+'+Math.round(v*12)+' dB',v=>{S.bassWeight=v})),
+        Object.assign(document.createElement('p'),{className:'hint',textContent:'For a rolling bass: MPK keys in Notes mode (section 06), Mono legato on, glide around 60–150 ms, then play the next key before letting go of the last. Real low end needs headphones or proper speakers; laptop speakers can\'t reproduce it.'}));
   }
   if(S.tab==='mode'){
     panel.append(row('Mode',chips(MODES,v=>v===S.mode,v=>{panic();S.mode=v})));
@@ -1305,7 +1310,7 @@ function buildSetBox(){
   });
   draw(); return w;
 }
-const SETTING_KEYS=['sound','env','envName','cutoff','res','revMix','dMix','delay','stereo','glide','glideMs','mono','bassTone','bassBite','bassSub','drumVol','mode','bpm','strum','pattern','arpOct','arpLayer','rate','roll','key','scale','octave','jmode','bass','vlead','locks','inv','songMode','setText','setName','setTrans'];
+const SETTING_KEYS=['sound','env','envName','cutoff','res','revMix','dMix','delay','stereo','glide','glideMs','mono','bassTone','bassBite','bassSub','bassWeight','bassSubOct','noteOct','drumVol','mode','bpm','strum','pattern','arpOct','arpLayer','rate','roll','key','scale','octave','jmode','bass','vlead','locks','inv','songMode','setText','setName','setTrans'];
 function getSettings(){
   const o={}; SETTING_KEYS.forEach(k=>o[k]=JSON.parse(JSON.stringify(S[k]??null)));
   o.vol=+$('vol').value; o.keys=MIDI.keys; o.split=MIDI.split; return o;
@@ -1324,7 +1329,7 @@ function applySettings(o){
   if(typeof renderSongMeta==='function')renderSongMeta();
 }
 const PRESET_EXAMPLES=[
-  ['Rolling bass',{sound:'bass',envName:'BASS',env:[3,320,.75,140],mono:true,glideMs:100,bassTone:260,bassBite:.4,bassSub:.75,revMix:.12,dMix:0,keys:'notes',mode:'play'}],
+  ['Rolling bass',{sound:'bass',envName:'BASS',env:[3,320,.75,140],mono:true,glideMs:100,noteOct:-2,bassWeight:.6,bassSubOct:1,bassTone:260,bassBite:.4,bassSub:.75,revMix:.12,dMix:0,keys:'notes',mode:'play'}],
   ['Ambient pad',{sound:'pad',envName:'LONG',env:[800,1000,.7,2000],revMix:.5,dMix:.2,delay:4,vlead:true,bass:true,mode:'play',jmode:'default'}],
   ['Arp keys',{sound:'epiano',envName:'KEYS',env:[5,1400,.25,500],mode:'arp',pattern:'two5',rate:3,arpLayer:'chord',revMix:.3,dMix:.15,delay:1}]];
 function loadPresets(){try{return JSON.parse(localStorage.getItem('hcp-presets')||'[]')}catch(e){return []}}
@@ -1569,7 +1574,7 @@ const endPaint=()=>{if(paint){paint=null;persist()}};
 songCv.addEventListener('pointerup',endPaint);songCv.addEventListener('pointercancel',endPaint);
 
 /* piano */
-const piano=$('piano'), keyEls={}, LO=36, HI=96;
+const piano=$('piano'), keyEls={}, LO=24, HI=96;
 const isBlack=m=>[1,3,6,8,10].includes(m%12);
 const whites=[];for(let m=LO;m<=HI;m++)if(!isBlack(m))whites.push(m);
 whites.forEach(m=>{const d=document.createElement('div');d.className='wk';if(m%12===0)d.innerHTML=`<small>C${m/12-1}</small>`;piano.appendChild(d);keyEls[m]=d});
@@ -1641,7 +1646,7 @@ function render(){
   if(S.mode==='drone'&&S.drone)add(S.drone.notes);
   if((S.mode==='arp'||S.mode==='repeat')&&S.seq)add(S.seq);
   if(S.mode==='lead'&&S.lead&&S.leadMidi!=null&&S.held.length)hit.add(S.leadMidi);
-  MIDI.notes.forEach((v,n)=>hit.add(n));
+  MIDI.notes.forEach((v,n)=>hit.add(MIDI.np.get(n)??n));
   for(const m in keyEls){const n=+m;keyEls[m].classList.toggle('hit',hit.has(n));keyEls[m].classList.toggle('bass',bass.has(n)&&!hit.has(n))}
 }
 let lastPos='';
@@ -1711,18 +1716,19 @@ function noteOn(n,vel,ch){
     if(deg!=null&&chordFor(deg,false))holdBtn(deg,'k'+n,v,Math.floor((n-base)/12));
     return;
   }
+  const pn=n+12*S.noteOct; MIDI.np.set(n,pn);   // the Notes-mode octave shift (Synth Bass defaults to −2)
   if(S.mono){
     // one note at a time; playing a new key while holding the last one slides between them
     MIDI.monoStack=MIDI.monoStack.filter(x=>x!==n); MIDI.monoStack.push(n);
     const cur=MIDI.mono, t=ctx.currentTime, gl=S.glideMs/1000;
     if(cur)cur.v.release(t,true);
     const pv=S.vel; S.vel=v;
-    const voice=makeVoice(n,t,{peak:.24*v,from:cur&&gl>0?cur.m:null,glide:Math.max(.005,gl),legato:!!cur});
-    S.vel=pv; MIDI.mono={m:n,v:voice,vel:v}; MIDI.notes.clear(); MIDI.notes.set(n,voice); render(); return;
+    const voice=makeVoice(pn,t,{peak:.24*v,from:cur&&gl>0?cur.m:null,glide:Math.max(.005,gl),legato:!!cur});
+    S.vel=pv; MIDI.mono={m:pn,v:voice,vel:v}; MIDI.notes.clear(); MIDI.notes.set(n,voice); render(); return;
   }
   if(MIDI.notes.has(n))MIDI.notes.get(n).release(ctx.currentTime,true);
   const prevVel=S.vel; S.vel=v;
-  MIDI.notes.set(n,makeVoice(n,ctx.currentTime,{peak:.24*v}));
+  MIDI.notes.set(n,makeVoice(pn,ctx.currentTime,{peak:.24*v}));
   S.vel=prevVel; render();
 }
 function noteOff(n,ch){
@@ -1731,12 +1737,12 @@ function noteOff(n,ch){
   if(MIDI.monoStack.includes(n)){
     MIDI.monoStack=MIDI.monoStack.filter(x=>x!==n);
     const cur=MIDI.mono, t=ctx.currentTime;
-    if(cur&&cur.m===n){
+    if(cur&&cur.m===n+12*S.noteOct){
       if(MIDI.monoStack.length){ // fall back to the key still held, sliding back to it
-        const back=MIDI.monoStack[MIDI.monoStack.length-1], gl=S.glideMs/1000; cur.v.release(t,true);
+        const back=MIDI.monoStack[MIDI.monoStack.length-1], bp=back+12*S.noteOct, gl=S.glideMs/1000; cur.v.release(t,true);
         const pv=S.vel; S.vel=cur.vel;
-        const voice=makeVoice(back,t,{peak:.24*cur.vel,from:gl>0?n:null,glide:Math.max(.005,gl),legato:true});
-        S.vel=pv; MIDI.mono={m:back,v:voice,vel:cur.vel}; MIDI.notes.clear(); MIDI.notes.set(back,voice);
+        const voice=makeVoice(bp,t,{peak:.24*cur.vel,from:gl>0?cur.m:null,glide:Math.max(.005,gl),legato:true});
+        S.vel=pv; MIDI.mono={m:bp,v:voice,vel:cur.vel}; MIDI.notes.clear(); MIDI.notes.set(back,voice); MIDI.np.set(back,bp);
       }else{cur.v.release(t);MIDI.mono=null;MIDI.notes.clear()}
     }
     render(); return;
